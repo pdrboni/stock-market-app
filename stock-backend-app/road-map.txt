@@ -1,0 +1,9 @@
+- Criei a estrutura de pastas MVC.
+- Criei os arquivos de user (userController.js, userModel.js, userRoutes.js)
+- Criei o pool de conexões com o banco de dados.
+- Adicionei as funções ao userModel.js e depois ao userServices.js e depois ao userController.js e depois as rotas.
+- Adicionei autenticação:
+jsonwebtoken para gerar/verificar token
+crypto para criptografar senha
+- Passo a passo da autenticação:
+1 - npm install jsonwebtoken
