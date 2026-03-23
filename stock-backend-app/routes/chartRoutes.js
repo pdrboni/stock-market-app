@@ -10,25 +10,10 @@ import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/charts', authMiddleware, async (req, res) => {
-  const charts = await getCharts();
-  res.json(charts);
-});
-router.get('/charts/filter', authMiddleware, async (req, res) => {
-  const charts = await getChartsFiltered();
-  res.json(charts);
-});
-router.post('/charts', authMiddleware, async (req, res) => {
-  const chart = await createChart();
-  res.json(chart);
-});
-router.delete('/charts', authMiddleware, async (req, res) => {
-  const chart = await deleteChart();
-  res.json(chart);
-});
-router.put('/charts', authMiddleware, async (req, res) => {
-  const chart = await updateChart();
-  res.json(chart);
-});
+router.get('/charts', authMiddleware, getCharts);
+router.get('/charts/filter', authMiddleware, getChartsFiltered);
+router.post('/charts', authMiddleware, createChart);
+router.delete('/charts', authMiddleware, deleteChart);
+router.put('/charts', authMiddleware, updateChart);
 
 export default router;

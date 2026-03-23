@@ -1,6 +1,7 @@
 import { comparePassword } from '../utils/comparePassword.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import db from '../config/database.js';
 
 dotenv.config();
 
@@ -15,7 +16,8 @@ export const loginUser = async (email, password) => {
     throw new Error('USER_NOT_FOUND');
   }
 
-  const isValid = await comparePassword(password, user.password);
+  console.log(user);
+  const isValid = await comparePassword(password, user.password_hash);
 
   if (!isValid) {
     throw new Error('INVALID_PASSWORD');

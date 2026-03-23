@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 
-export const comparePassword = (password, storedHash) => {
-  return new Promise((resolve, reject) => {
+export const comparePassword = async (password, storedHash) => {
+  const result = await new Promise((resolve, reject) => {
     const [salt, key] = storedHash.split(':');
 
     crypto.scrypt(password, salt, 64, (err, derivedKey) => {
@@ -15,4 +15,6 @@ export const comparePassword = (password, storedHash) => {
       resolve(isMatch);
     });
   });
+
+  return result;
 };
