@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoneyBuilder Broker | User Profile & Funding</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #0b1524;
+      --bg-1: #0f1b2b;
+      --bg-2: #111d2f;
+      --line: #30445e;
+      --line-soft: rgba(48, 68, 94, 0.58);
+      --cta: #234467;
+      --cta-edge: #2f5a86;
+      --t-1: #f2f5f8;
+      --t-2: #d7dee7;
+      --t-3: #b4c0cf;
+      --t-4: #8fa1b7;
+      --ok: #3ca56f;
+      --bad: #bf5f5f;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg-base);
+      color: var(--t-1);
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+    body { min-width: 1420px; overflow-x: auto; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 54px 1fr;
+      background: var(--bg-base) url("assets/market-background.svg") center / cover no-repeat;
+      position: relative;
+    }
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 21, 36, 0.22);
+      pointer-events: none;
+    }
+
+    .top {
+      z-index: 2;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(17, 29, 47, 0.92);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font: 650 16px "Manrope", sans-serif;
+    }
+    .mark {
+      width: 14px;
+      height: 14px;
+      border: 1px solid #3a5270;
+      border-radius: 4px;
+      background: #1a2940;
+    }
+    .strip { display: flex; align-items: center; gap: 14px; color: var(--t-3); }
+    .strip strong { color: var(--t-2); margin-right: 4px; }
+    .up { color: var(--ok); }
+    .down { color: var(--bad); }
+    .chip {
+      border: 1px solid var(--line);
+      background: #1a2940;
+      border-radius: 7px;
+      padding: 5px 8px;
+      color: var(--t-3);
+      font-size: 11px;
+    }
+
+    .layout {
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 218px 1fr 336px;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .side, .center, .right {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: var(--bg-1);
+      overflow: hidden;
+    }
+
+    .side {
+      padding: 10px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 10px;
+    }
+    .profile-mini {
+      border: 1px solid var(--line-soft);
+      background: var(--bg-2);
+      border-radius: 8px;
+      padding: 10px;
+      color: var(--t-3);
+      font-size: 12px;
+      line-height: 1.42;
+    }
+    .profile-mini strong {
+      display: block;
+      color: var(--t-2);
+      margin-top: 2px;
+      font-size: 13px;
+    }
+    .nav { display: grid; gap: 4px; }
+    .nav button {
+      height: 34px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--t-3);
+      text-align: left;
+      padding: 0 10px;
+      font: 500 13px "IBM Plex Sans", sans-serif;
+      cursor: pointer;
+    }
+    .nav button.active {
+      border-color: #3a5270;
+      background: #1a2940;
+      color: var(--t-1);
+      font-weight: 600;
+    }
+    .assets {
+      border-top: 1px solid rgba(48, 68, 94, 0.52);
+      padding-top: 8px;
+      display: grid;
+      gap: 6px;
+    }
+    .assets small, .foot { color: var(--t-4); font-size: 11px; }
+    .asset {
+      height: 30px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--bg-2);
+      padding: 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--t-2);
+    }
+
+    .center {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-height: 0;
+    }
+    .head {
+      border-bottom: 1px solid var(--line-soft);
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .head h2 {
+      margin: 0;
+      font: 650 20px "Manrope", sans-serif;
+      letter-spacing: -0.01em;
+    }
+    .head p {
+      margin: 3px 0 0;
+      font-size: 12px;
+      color: var(--t-4);
+    }
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(58, 82, 112, 0.72);
+      background: #1a2940;
+      border-radius: 8px;
+      padding: 7px 10px;
+      color: var(--t-3);
+      font-size: 12px;
+    }
+
+    .actions { display: flex; gap: 6px; }
+    .btn {
+      height: 32px;
+      border: 1px solid rgba(58, 82, 112, 0.78);
+      border-radius: 8px;
+      background: #1a2940;
+      color: var(--t-2);
+      padding: 0 12px;
+      font: 600 12px "IBM Plex Sans", sans-serif;
+      cursor: pointer;
+    }
+    .btn.primary {
+      border-color: var(--cta-edge);
+      background: var(--cta);
+      color: var(--t-1);
+    }
+
+    .summary {
+      border-bottom: 1px solid var(--line-soft);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .tile {
+      border: 1px solid var(--line-soft);
+      background: var(--bg-2);
+      border-radius: 8px;
+      padding: 9px 10px;
+      display: grid;
+      gap: 4px;
+    }
+    .tile .k { font-size: 11px; color: var(--t-4); }
+    .tile .v { font: 600 15px "Manrope", sans-serif; color: var(--t-1); }
+    .tile .m { font-size: 11px; color: var(--t-3); }
+
+    .edit-zone {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 1fr auto;
+    }
+
+    .columns {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+    }
+    .panel {
+      border: 1px solid var(--line-soft);
+      background: var(--bg-2);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+    .panel h3 {
+      margin: 0;
+      font-size: 13px;
+      color: var(--t-2);
+      letter-spacing: 0.01em;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .field { display: grid; gap: 5px; }
+    .field label {
+      color: var(--t-3);
+      font-size: 11px;
+      letter-spacing: 0.02em;
+    }
+    .field input, .field select {
+      height: 34px;
+      border: 1px solid rgba(58, 82, 112, 0.72);
+      border-radius: 7px;
+      background: #1a2940;
+      color: var(--t-1);
+      padding: 0 10px;
+      font: 500 12px "IBM Plex Sans", sans-serif;
+      outline: none;
+    }
+    .field input:focus, .field select:focus {
+      border-color: #5d84af;
+      box-shadow: 0 0 0 2px rgba(47, 90, 134, 0.48);
+    }
+    .hint { color: var(--t-4); font-size: 11px; }
+
+    .security {
+      border-top: 1px solid var(--line-soft);
+      padding-top: 8px;
+      display: grid;
+      gap: 7px;
+    }
+    .security-row {
+      border: 1px solid rgba(48, 68, 94, 0.55);
+      background: #1a2940;
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--t-3);
+    }
+    .security-row strong { color: var(--t-2); display: block; margin-bottom: 2px; }
+
+    .funding {
+      border-top: 1px solid var(--line-soft);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      background: rgba(17, 29, 47, 0.62);
+    }
+    .funding-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .funding-head h3 {
+      margin: 0;
+      font-size: 13px;
+      color: var(--t-2);
+    }
+    .fund-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+    .fund-note {
+      border: 1px solid rgba(191, 95, 95, 0.5);
+      background: rgba(50, 24, 28, 0.52);
+      border-radius: 8px;
+      color: #d9b1b1;
+      padding: 7px 9px;
+      font-size: 11px;
+    }
+
+    .right {
+      padding: 10px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 10px;
+      background: rgba(15, 27, 43, 0.86);
+    }
+    .box {
+      border: 1px solid var(--line-soft);
+      background: rgba(17, 29, 47, 0.68);
+      border-radius: 8px;
+      padding: 9px;
+      display: grid;
+      gap: 7px;
+    }
+    .box h4 {
+      margin: 0;
+      color: var(--t-2);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .log {
+      border-top: 1px solid rgba(48, 68, 94, 0.4);
+      padding-top: 7px;
+      font-size: 12px;
+      color: var(--t-3);
+      line-height: 1.36;
+    }
+    .log:first-of-type { border-top: 0; padding-top: 0; }
+    .log small { display: block; color: var(--t-4); margin-top: 2px; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="brand"><span class="mark"></span>MoneyBuilder Broker</div>
+      <div class="strip">
+        <span><strong>IBOV</strong>129,881 <span class="up">+0.62%</span></span>
+        <span><strong>USD/BRL</strong>4.9283 <span class="down">-0.23%</span></span>
+        <span><strong>IFIX</strong>3,289 <span class="up">+0.18%</span></span>
+        <span class="chip">Conta: Prime</span>
+        <span class="chip">Session: Open</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="side">
+        <section class="profile-mini">
+          User Context
+          <strong>Pedro Barbosa</strong>
+          CPF verified · KYC level 2
+        </section>
+        <nav class="nav">
+          <button type="button">Dashboard</button>
+          <button type="button">Portfolio</button>
+          <button type="button">Orders</button>
+          <button type="button">Transfers</button>
+          <button type="button" class="active">User</button>
+          <button type="button">Security</button>
+        </nav>
+        <section class="assets">
+          <small>Quick Balances</small>
+          <div class="asset"><span>Available Cash</span><span>R$ 118,420</span></div>
+          <div class="asset"><span>Pending Funds</span><span class="down">R$ 4,100</span></div>
+          <div class="asset"><span>Credit Limit</span><span>R$ 30,000</span></div>
+        </section>
+        <div class="foot">Latency 22ms | Feed RT-B3</div>
+      </aside>
+
+      <main class="center">
+        <section class="head">
+          <div>
+            <h2>User Profile & Funding</h2>
+            <p>Last update 10:43:21 · Account Trace ID: MBR-239991-A</p>
+          </div>
+          <div class="actions">
+            <button class="btn primary" type="button">Save Changes</button>
+            <button class="btn" type="button">Cancel</button>
+            <button class="btn" type="button">Reset</button>
+          </div>
+        </section>
+
+        <section class="summary">
+          <article class="tile">
+            <span class="k">Verification Status</span>
+            <span class="v">KYC Approved</span>
+            <span class="m"><span class="up">Compliant</span> · Updated today</span>
+          </article>
+          <article class="tile">
+            <span class="k">Security Posture</span>
+            <span class="v">Strong</span>
+            <span class="m">2FA enabled · 3 trusted devices</span>
+          </article>
+          <article class="tile">
+            <span class="k">Funding Availability</span>
+            <span class="v">Same Day</span>
+            <span class="m">PIX deposits up to R$ 250,000</span>
+          </article>
+        </section>
+
+        <section class="edit-zone">
+          <div class="columns">
+            <section class="panel">
+              <h3>Personal Data</h3>
+              <div class="grid2">
+                <div class="field"><label>First Name</label><input value="Pedro" /></div>
+                <div class="field"><label>Last Name</label><input value="Barbosa" /></div>
+                <div class="field"><label>Email</label><input value="pedro.barbosa@moneybuilder.com" /></div>
+                <div class="field"><label>Phone</label><input value="+55 11 98888-1200" /></div>
+                <div class="field"><label>CPF</label><input value="***.***.***-90" /></div>
+                <div class="field"><label>Date of Birth</label><input value="1989-08-14" /></div>
+              </div>
+              <div class="hint">All required fields validated for trading account continuity.</div>
+            </section>
+
+            <section class="panel">
+              <h3>Contact & Compliance</h3>
+              <div class="grid2">
+                <div class="field"><label>Address</label><input value="Av. Paulista, 1800" /></div>
+                <div class="field"><label>City</label><input value="São Paulo" /></div>
+                <div class="field"><label>State</label><select><option>SP</option></select></div>
+                <div class="field"><label>ZIP</label><input value="01310-200" /></div>
+                <div class="field"><label>Tax Residency</label><select><option>Brazil</option></select></div>
+                <div class="field"><label>Professional Profile</label><select><option>Individual Investor</option></select></div>
+              </div>
+              <div class="hint">Compliance profile synced at 09:58:04 with no pending mismatch.</div>
+            </section>
+          </div>
+
+          <section class="funding">
+            <div class="security">
+              <div class="security-row">
+                <div><strong>Password</strong>Updated 42 days ago</div>
+                <button class="btn" type="button">Change</button>
+              </div>
+              <div class="security-row">
+                <div><strong>Two-Factor Authentication</strong>Authenticator app + backup code enabled</div>
+                <button class="btn" type="button">Manage</button>
+              </div>
+              <div class="security-row">
+                <div><strong>Trusted Session Devices</strong>3 active devices · Last login 10:41:03</div>
+                <button class="btn" type="button">Review</button>
+              </div>
+            </div>
+
+            <div class="funding-head">
+              <h3>Deposit Funds</h3>
+              <div class="status-line"><span class="up">Operational</span> · Settlement trace required</div>
+            </div>
+            <div class="fund-grid">
+              <div class="field"><label>Amount</label><input value="R$ 10,000.00" /></div>
+              <div class="field"><label>Source Account</label><select><option>Banco Itaú - ****4451</option></select></div>
+              <div class="field"><label>Method</label><select><option>PIX Instant Transfer</option></select></div>
+              <button class="btn primary" type="button">Deposit Funds</button>
+            </div>
+            <div class="fund-note">Funding hold: one transfer is still in anti-fraud review (Operation ID: TRX-884120).</div>
+          </section>
+        </section>
+      </main>
+
+      <aside class="right">
+        <section class="box">
+          <h4>Recent Account Events</h4>
+          <div class="log">Profile email updated successfully.<small>Trace: EVT-22319 · 10:21:54</small></div>
+          <div class="log">Device trust granted after 2FA challenge.<small>Trace: EVT-22302 · 09:58:13</small></div>
+          <div class="log">Password reset policy acknowledged.<small>Trace: EVT-22274 · 08:12:43</small></div>
+        </section>
+
+        <section class="box">
+          <h4>Pending Requests</h4>
+          <div class="log">Address confirmation document under review.<small>KYC queue · ETA 2h</small></div>
+          <div class="log">Deposit review in progress.<small>TRX-884120 · anti-fraud check</small></div>
+        </section>
+
+        <section class="box">
+          <h4>Compliance Notices</h4>
+          <div class="log"><span class="down">Risk signal:</span> transfer velocity exceeded user baseline.<small>No block applied, enhanced monitoring active.</small></div>
+          <div class="log"><span class="up">Status:</span> account remains enabled for trading.<small>Last compliance sync: 10:39:11</small></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</body>
+</html>

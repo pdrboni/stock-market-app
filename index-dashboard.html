@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoneyBuilder Home Broker Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1524;
+      --panel: #0f1b2b;
+      --panel-2: #111d2f;
+      --line: #30445e;
+      --line-soft: rgba(48, 68, 94, 0.62);
+      --text: #f2f5f8;
+      --text-2: #d7dee7;
+      --text-3: #b4c0cf;
+      --text-4: #8fa1b7;
+      --action: #234467;
+      --action-edge: #2f5a86;
+      --up: #3ca56f;
+      --down: #bf5f5f;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+    body { overflow: hidden; }
+
+    .app {
+      height: 100vh;
+      display: grid;
+      grid-template-rows: 54px 1fr;
+      background: var(--bg) url("assets/market-background.svg") center / cover no-repeat;
+      position: relative;
+      overflow: hidden;
+    }
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 21, 36, 0.2);
+      pointer-events: none;
+    }
+
+    .topbar {
+      z-index: 2;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(17, 29, 47, 0.92);
+      padding: 0 10px;
+      display: grid;
+      grid-template-columns: 220px 1fr 520px;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font: 650 16px "Manrope", sans-serif;
+    }
+    .mark { width: 14px; height: 14px; border: 1px solid #3a5270; border-radius: 4px; background: #1a2940; }
+    .market {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--text-3);
+      white-space: nowrap;
+    }
+    .market strong { color: var(--text-2); margin-right: 4px; }
+    .up { color: var(--up); }
+    .down { color: var(--down); }
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+    }
+    .mini, .search, .btn {
+      border: 1px solid rgba(58, 82, 112, 0.76);
+      background: #1a2940;
+      color: var(--text-3);
+      border-radius: 7px;
+      height: 32px;
+      font: 500 12px "IBM Plex Sans", sans-serif;
+      padding: 0 10px;
+    }
+    .search { width: 170px; }
+    .btn {
+      background: var(--action);
+      border-color: var(--action-edge);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .layout {
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 220px 1fr 332px;
+      gap: 10px;
+      padding: 10px;
+      height: calc(100vh - 54px);
+      min-height: 0;
+      overflow: hidden;
+    }
+    .side, .main, .right {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: var(--panel);
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .side {
+      padding: 10px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 10px;
+      min-height: 0;
+    }
+    .profile {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--panel-2);
+      padding: 10px;
+      font-size: 12px;
+      color: var(--text-3);
+      line-height: 1.42;
+    }
+    .profile strong { display: block; color: var(--text-2); margin-top: 2px; font-size: 13px; }
+    .nav { display: grid; gap: 4px; }
+    .nav button {
+      height: 34px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-3);
+      text-align: left;
+      padding: 0 10px;
+      font: 500 13px "IBM Plex Sans", sans-serif;
+    }
+    .nav button.active { border-color: #3a5270; background: #1a2940; color: var(--text); font-weight: 600; }
+    .pins { border-top: 1px solid rgba(48, 68, 94, 0.52); padding-top: 8px; display: grid; gap: 6px; overflow: auto; min-height: 0; }
+    .pins small, .foot { color: var(--text-4); font-size: 11px; }
+    .pin {
+      height: 30px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--panel-2);
+      padding: 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-2);
+    }
+
+    .main {
+      display: grid;
+      grid-template-rows: 56px 1fr 1fr;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .asset-strip {
+      border-bottom: 1px solid var(--line-soft);
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .asset-strip h2 { margin: 0; font: 650 18px "Manrope", sans-serif; }
+    .asset-strip p { margin: 3px 0 0; color: var(--text-4); font-size: 12px; }
+    .trade-actions { display: flex; gap: 6px; }
+    .trade-actions button {
+      height: 30px; border-radius: 7px; border: 1px solid rgba(58, 82, 112, 0.72); background: #1a2940; color: var(--text-2); padding: 0 12px; font: 600 12px "IBM Plex Sans", sans-serif;
+    }
+    .trade-actions .buy { border-color: rgba(60, 165, 111, 0.5); color: #c9f2dc; }
+    .trade-actions .sell { border-color: rgba(191, 95, 95, 0.5); color: #efc3c3; }
+
+    .watchlist,
+    .positions {
+      padding: 10px;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 34px 1fr;
+      overflow: hidden;
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--panel-2);
+      padding: 0 10px;
+      font-size: 12px;
+      color: var(--text-3);
+    }
+    .section-head strong { color: var(--text-2); letter-spacing: 0.02em; }
+    .table-shell {
+      margin-top: 8px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel-2);
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 30px 1fr;
+    }
+    .thead {
+      display: grid;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--text-4);
+      border-bottom: 1px solid rgba(48, 68, 94, 0.5);
+      background: rgba(17, 29, 47, 0.6);
+    }
+    .watchlist .thead,
+    .watchlist .row { grid-template-columns: 1fr 0.8fr 0.8fr 1fr 0.8fr; }
+    .positions .thead,
+    .positions .row { grid-template-columns: 1fr 0.7fr 0.8fr 0.8fr 0.8fr 1fr 0.8fr; }
+    .tbody {
+      overflow: auto;
+      min-height: 0;
+    }
+    .row {
+      display: grid;
+      align-items: center;
+      height: 28px;
+      padding: 0 8px;
+      font-size: 12px;
+      color: var(--text-2);
+      border-bottom: 1px solid rgba(48, 68, 94, 0.26);
+      white-space: nowrap;
+    }
+    .row:hover { background: rgba(26, 41, 64, 0.36); }
+    .ticker { font-weight: 600; color: var(--text); }
+
+    .right {
+      padding: 10px;
+      display: grid;
+      grid-template-rows: 1.2fr 1fr;
+      gap: 10px;
+      background: rgba(15, 27, 43, 0.86);
+      min-height: 0;
+      overflow: hidden;
+    }
+    .box {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: rgba(17, 29, 47, 0.68);
+      display: grid;
+      grid-template-rows: 34px 1fr;
+      overflow: hidden;
+    }
+    .box-head {
+      border-bottom: 1px solid rgba(48, 68, 94, 0.46);
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-3);
+      font-size: 12px;
+    }
+    .box-head strong { color: var(--text-2); text-transform: uppercase; letter-spacing: 0.02em; }
+    .box-body {
+      overflow: auto;
+      padding: 8px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+    .order-item, .risk-item {
+      border: 1px solid rgba(48, 68, 94, 0.5);
+      border-radius: 8px;
+      background: var(--panel-2);
+      padding: 8px;
+      font-size: 12px;
+      color: var(--text-3);
+      line-height: 1.4;
+    }
+    .order-item strong, .risk-item strong { color: var(--text-2); display: block; margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="mark"></span>MoneyBuilder Broker</div>
+      <div class="market">
+        <span><strong>IBOV</strong>129,881 <span class="up">+0.62%</span></span>
+        <span><strong>USD/BRL</strong>4.9283 <span class="down">-0.23%</span></span>
+        <span><strong>IFIX</strong>3,289 <span class="up">+0.18%</span></span>
+        <span><strong>DI1F27</strong>10.41% <span class="up">+0.01pp</span></span>
+      </div>
+      <div class="actions">
+        <select class="mini"><option>Conta: Prime</option></select>
+        <input class="search" placeholder="Buscar ativo ou ticker..." />
+        <button class="btn">New Order</button>
+        <div class="chip">3</div>
+        <div class="chip">Session: Open</div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="side">
+        <section class="profile">
+          Investor Profile
+          <strong>Moderate Growth</strong>
+          Available Cash: R$ 118,420
+        </section>
+        <nav class="nav">
+          <button type="button" class="active">Dashboard</button>
+          <button type="button">Watchlist</button>
+          <button type="button">Portfolio</button>
+          <button type="button">Orders</button>
+          <button type="button">Analysis</button>
+          <button type="button">Trade</button>
+        </nav>
+        <section class="pins">
+          <small>Pinned Assets</small>
+          <div class="pin"><span>PETR4</span><span class="up">+1.40%</span></div>
+          <div class="pin"><span>VALE3</span><span class="down">-0.72%</span></div>
+          <div class="pin"><span>ITUB4</span><span class="up">+0.44%</span></div>
+          <div class="pin"><span>BBDC4</span><span class="down">-0.31%</span></div>
+          <div class="pin"><span>WEGE3</span><span class="up">+0.89%</span></div>
+        </section>
+        <div class="foot">Latency 22ms | Feed RT-B3</div>
+      </aside>
+
+      <main class="main">
+        <section class="asset-strip">
+          <div>
+            <h2>PETR4</h2>
+            <p>Petrobras PN · Selected Asset · Last 38.42 · Day +1.40% · Volume 31.2M · Spread 0.02</p>
+          </div>
+          <div class="trade-actions">
+            <button>Analyze</button>
+            <button class="buy">Buy</button>
+            <button class="sell">Sell</button>
+          </div>
+        </section>
+
+        <section class="watchlist">
+          <div class="section-head">
+            <strong>Watchlist</strong>
+            <span>Filter | Sort | Dense</span>
+          </div>
+          <div class="table-shell">
+            <div class="thead"><span>Ticker</span><span>Last</span><span>Day</span><span>Bid/Ask</span><span>Vol</span></div>
+            <div class="tbody" id="watchlistBody"></div>
+          </div>
+        </section>
+
+        <section class="positions">
+          <div class="section-head">
+            <strong>Portfolio Positions</strong>
+            <span>Sort by P/L | Allocation View</span>
+          </div>
+          <div class="table-shell">
+            <div class="thead"><span>Asset</span><span>Qty</span><span>Avg Price</span><span>Last</span><span>Day</span><span>Unrealized P/L</span><span>Allocation</span></div>
+            <div class="tbody" id="positionsBody"></div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="right">
+        <section class="box">
+          <div class="box-head"><strong>Open Orders</strong><span>All | Pending | Exceptions</span></div>
+          <div class="box-body" id="ordersBody"></div>
+        </section>
+        <section class="box">
+          <div class="box-head"><strong>Performance & Risk</strong><span>Live</span></div>
+          <div class="box-body">
+            <article class="risk-item"><strong>Total Equity</strong>R$ 722,430</article>
+            <article class="risk-item"><strong>Day P/L</strong><span class="up">+R$ 4,316</span></article>
+            <article class="risk-item"><strong>Month P/L</strong><span class="up">+R$ 18,204</span></article>
+            <article class="risk-item"><strong>VaR 95%</strong>R$ 13,980</article>
+            <article class="risk-item"><strong>Allocation Mix</strong>Equities 62% · FII 19% · Cash 13% · Fixed 6%</article>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const watchlistData = [
+      ["PETR4","38.42","+1.40%","38.41 / 38.43","31.2M"],
+      ["VALE3","63.15","-0.72%","63.14 / 63.16","24.5M"],
+      ["ITUB4","34.28","+0.44%","34.27 / 34.29","18.8M"],
+      ["BBDC4","17.76","-0.31%","17.75 / 17.77","11.1M"],
+      ["WEGE3","42.91","+0.89%","42.90 / 42.92","9.4M"],
+      ["BBAS3","53.07","+0.13%","53.06 / 53.08","8.1M"],
+      ["B3SA3","14.34","-0.55%","14.33 / 14.35","12.7M"],
+      ["ABEV3","13.02","+0.22%","13.01 / 13.03","10.9M"],
+      ["RENT3","62.88","+0.47%","62.87 / 62.89","4.5M"],
+      ["LREN3","17.41","-0.18%","17.40 / 17.42","6.2M"],
+      ["SUZB3","59.14","+0.52%","59.13 / 59.15","3.9M"],
+      ["GGBR4","21.75","-0.26%","21.74 / 21.76","7.1M"],
+      ["EMBR3","31.88","+1.11%","31.87 / 31.89","2.8M"],
+      ["RAIL3","22.65","+0.33%","22.64 / 22.66","5.4M"],
+      ["ELET3","39.22","-0.41%","39.21 / 39.23","4.1M"],
+      ["CMIG4","12.86","+0.29%","12.85 / 12.87","8.7M"],
+      ["TAEE11","35.40","+0.06%","35.39 / 35.41","1.9M"],
+      ["KLBN11","22.11","-0.22%","22.10 / 22.12","2.6M"],
+      ["CSAN3","18.53","+0.15%","18.52 / 18.54","3.0M"],
+      ["HAPV3","3.85","-0.51%","3.84 / 3.86","14.8M"]
+    ];
+
+    const positionsData = [
+      ["PETR4","3,500","36.11","38.42","+1.40%","+R$ 8,085","17.4%"],
+      ["VALE3","1,900","67.80","63.15","-0.72%","-R$ 8,835","14.2%"],
+      ["ITUB4","2,700","31.50","34.28","+0.44%","+R$ 7,506","12.1%"],
+      ["BBDC4","4,000","18.94","17.76","-0.31%","-R$ 4,720","9.2%"],
+      ["WEGE3","1,250","40.02","42.91","+0.89%","+R$ 3,612","7.5%"],
+      ["BBAS3","1,800","51.18","53.07","+0.13%","+R$ 3,402","6.9%"],
+      ["B3SA3","5,200","15.11","14.34","-0.55%","-R$ 4,004","8.0%"],
+      ["ABEV3","3,600","12.43","13.02","+0.22%","+R$ 2,124","5.7%"],
+      ["HGLG11","620","157.22","160.18","+0.08%","+R$ 1,835","6.1%"],
+      ["KNRI11","540","149.74","148.62","-0.11%","-R$ 605","4.4%"],
+      ["MXRF11","2,100","10.22","10.35","+0.10%","+R$ 273","3.1%"],
+      ["TAEE11","700","34.81","35.40","+0.06%","+R$ 413","3.4%"],
+      ["CMIG4","2,400","12.20","12.86","+0.29%","+R$ 1,584","3.8%"],
+      ["ELET3","850","40.12","39.22","-0.41%","-R$ 765","2.9%"],
+      ["GGBR4","1,300","22.04","21.75","-0.26%","-R$ 377","2.6%"],
+      ["SUZB3","480","56.31","59.14","+0.52%","+R$ 1,358","2.7%"]
+    ];
+
+    const openOrdersData = [
+      ["PETR4 BUY 1,000","Pending","Limit 38.35 | Sent 10:42:14","Modify / Cancel"],
+      ["VALE3 SELL 600","Partial","Limit 63.40 | Fill 240","Modify / Cancel"],
+      ["ITUB4 BUY 500","Rejected","Margin threshold exceeded","Review"],
+      ["WEGE3 SELL 300","Filled","Avg 42.88 | 10:38:55","Details"],
+      ["ABEV3 BUY 2,000","Pending","Limit 12.98 | Sent 10:44:01","Modify / Cancel"],
+      ["B3SA3 SELL 1,500","Pending","Limit 14.38 | Sent 10:44:30","Modify / Cancel"]
+    ];
+
+    function addRows(containerId, data) {
+      const container = document.getElementById(containerId);
+      data.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "row";
+        item.forEach((v, idx) => {
+          const cell = document.createElement("span");
+          cell.textContent = v;
+          if (idx === 0) cell.className = "ticker";
+          if (typeof v === "string" && v.includes("+")) cell.classList.add("up");
+          if (typeof v === "string" && v.includes("-")) cell.classList.add("down");
+          row.appendChild(cell);
+        });
+        container.appendChild(row);
+      });
+    }
+
+    function addOrders() {
+      const container = document.getElementById("ordersBody");
+      openOrdersData.forEach((o) => {
+        const el = document.createElement("article");
+        el.className = "order-item";
+        const stateClass = o[1] === "Rejected" ? "down" : (o[1] === "Filled" ? "up" : "");
+        el.innerHTML = `<strong>${o[0]} <span class="${stateClass}">${o[1]}</span></strong>${o[2]}<br>${o[3]}`;
+        container.appendChild(el);
+      });
+    }
+
+    addRows("watchlistBody", watchlistData);
+    addRows("positionsBody", positionsData);
+    addOrders();
+  </script>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</body>
+</html>

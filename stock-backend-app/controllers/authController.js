@@ -13,14 +13,18 @@ export const login = async (req, res) => {
       maxAge: 60 * 60 * 1000,
     });
 
-    res.json({ user });
+    res.json({ user, token });
   } catch (err) {
     if (err.message === 'USER_NOT_FOUND') {
-      return res.status(401).json({ error: 'Usuário não encontrado' });
+      return res
+        .status(401)
+        .json({ error: 'Usuário não encontrado ou senha incorreta' });
     }
 
     if (err.message === 'INVALID_PASSWORD') {
-      return res.status(401).json({ error: 'Senha inválida' });
+      return res
+        .status(401)
+        .json({ error: 'Usuário não encontrado ou senha incorreta' });
     }
 
     res.status(500).json({ error: 'Erro interno' });

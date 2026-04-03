@@ -9,6 +9,18 @@ const getStockPrices = async (req, res) => {
   }
 };
 
+const getStockPricesFiltered = async (req, res) => {
+  try {
+    const filters = req.query;
+    console.log(filters);
+    const stockPrices =
+      await stockPricesService.getStockPricesFiltered(filters);
+    res.json(stockPrices);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const createStockPrice = async (req, res) => {
   try {
     const { stock_id, open, close, high, low, interval, volume, price_time } =
@@ -66,4 +78,10 @@ const updateStockPrice = async (req, res) => {
   }
 };
 
-export { getStockPrices, createStockPrice, deleteStockPrice, updateStockPrice };
+export {
+  getStockPrices,
+  createStockPrice,
+  deleteStockPrice,
+  updateStockPrice,
+  getStockPricesFiltered,
+};

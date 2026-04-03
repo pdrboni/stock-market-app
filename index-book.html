@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoneyBuilder Broker | Order Negotiation Book</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg0: #0b1524;
+      --bg1: #0f1b2b;
+      --bg2: #111d2f;
+      --line: #30445e;
+      --line-soft: rgba(48, 68, 94, 0.58);
+      --action: #234467;
+      --action-edge: #2f5a86;
+      --t1: #f2f5f8;
+      --t2: #d7dee7;
+      --t3: #b4c0cf;
+      --t4: #8fa1b7;
+      --up: #3ca56f;
+      --down: #bf5f5f;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg0);
+      color: var(--t1);
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+    body { min-width: 1460px; overflow-x: auto; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 54px 1fr;
+      background: var(--bg0) url("assets/market-background.svg") center / cover no-repeat;
+      position: relative;
+    }
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 21, 36, 0.22);
+      pointer-events: none;
+    }
+
+    .topbar {
+      z-index: 2;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(17, 29, 47, 0.92);
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font: 650 16px "Manrope", sans-serif;
+    }
+    .mark { width: 14px; height: 14px; border: 1px solid #3a5270; border-radius: 4px; background: #1a2940; }
+    .strip { display: flex; align-items: center; gap: 14px; color: var(--t3); }
+    .strip strong { color: var(--t2); margin-right: 4px; }
+    .up { color: var(--up); }
+    .down { color: var(--down); }
+    .chip { border: 1px solid var(--line); background: #1a2940; border-radius: 7px; padding: 5px 8px; color: var(--t3); font-size: 11px; }
+
+    .layout {
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 218px 1fr 320px;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .side, .center, .right {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: var(--bg1);
+      overflow: hidden;
+    }
+
+    .side {
+      padding: 10px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 10px;
+    }
+    .profile {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--bg2);
+      padding: 10px;
+      color: var(--t3);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .profile strong { display: block; color: var(--t2); margin-top: 2px; font-size: 13px; }
+    .nav { display: grid; gap: 4px; }
+    .nav button {
+      height: 34px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--t3);
+      text-align: left;
+      padding: 0 10px;
+      font: 500 13px "IBM Plex Sans", sans-serif;
+    }
+    .nav button.active { border-color: #3a5270; background: #1a2940; color: var(--t1); font-weight: 600; }
+    .pins { border-top: 1px solid rgba(48, 68, 94, 0.52); padding-top: 8px; display: grid; gap: 6px; }
+    .pins small, .foot { color: var(--t4); font-size: 11px; }
+    .pin {
+      height: 30px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--bg2);
+      padding: 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--t2);
+    }
+
+    .center {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-height: 0;
+    }
+    .assetbar {
+      border-bottom: 1px solid var(--line-soft);
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .assetbar h2 { margin: 0; font: 650 20px "Manrope", sans-serif; letter-spacing: -0.01em; }
+    .assetbar p { margin: 3px 0 0; color: var(--t4); font-size: 12px; }
+    .mini {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--t3);
+      font-size: 12px;
+    }
+    .mini .box {
+      border: 1px solid rgba(58, 82, 112, 0.72);
+      background: #1a2940;
+      border-radius: 7px;
+      padding: 5px 8px;
+      white-space: nowrap;
+    }
+
+    .core {
+      border-bottom: 1px solid var(--line-soft);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.88fr;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .book {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--bg2);
+      display: grid;
+      grid-template-rows: 34px 1fr;
+      min-height: 0;
+    }
+    .book-head {
+      border-bottom: 1px solid rgba(48, 68, 94, 0.5);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 0 10px;
+      align-items: center;
+      color: var(--t3);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+    }
+    .ladder {
+      overflow: auto;
+      padding: 6px 0;
+    }
+    .ladder-row {
+      height: 24px;
+      display: grid;
+      grid-template-columns: 0.9fr 0.7fr 0.8fr 0.8fr 0.7fr 0.9fr;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 12px;
+      color: var(--t2);
+      border-bottom: 1px solid rgba(48, 68, 94, 0.23);
+    }
+    .ladder-row:hover { background: rgba(26, 41, 64, 0.35); }
+    .bid { color: #7ed0a1; }
+    .ask { color: #d39191; }
+    .spread {
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-top: 1px solid rgba(48, 68, 94, 0.5);
+      border-bottom: 1px solid rgba(48, 68, 94, 0.5);
+      color: var(--t3);
+      font-size: 11px;
+      background: #1a2940;
+    }
+
+    .ticket {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--bg2);
+      padding: 10px;
+      display: grid;
+      grid-template-rows: auto auto auto auto auto;
+      gap: 8px;
+      align-content: start;
+    }
+    .ticket h3 { margin: 0; font-size: 13px; color: var(--t2); letter-spacing: 0.01em; }
+    .sides { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .btn {
+      height: 32px;
+      border: 1px solid rgba(58, 82, 112, 0.76);
+      border-radius: 8px;
+      background: #1a2940;
+      color: var(--t2);
+      font: 600 12px "IBM Plex Sans", sans-serif;
+    }
+    .btn.buy { border-color: rgba(60, 165, 111, 0.55); color: #c7f0d9; }
+    .btn.sell { border-color: rgba(191, 95, 95, 0.55); color: #f0c6c6; }
+    .btn.primary { border-color: var(--action-edge); background: var(--action); color: var(--t1); }
+    .ticket-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .field { display: grid; gap: 5px; }
+    .field label { color: var(--t3); font-size: 11px; letter-spacing: 0.02em; }
+    .field input, .field select {
+      height: 34px;
+      border: 1px solid rgba(58, 82, 112, 0.72);
+      border-radius: 7px;
+      background: #1a2940;
+      color: var(--t1);
+      padding: 0 10px;
+      font: 500 12px "IBM Plex Sans", sans-serif;
+      outline: none;
+    }
+    .hint { color: var(--t4); font-size: 11px; }
+    .status {
+      border: 1px solid rgba(191, 95, 95, 0.5);
+      background: rgba(50, 24, 28, 0.52);
+      border-radius: 8px;
+      color: #d9b1b1;
+      padding: 7px 9px;
+      font-size: 11px;
+    }
+
+    .recent {
+      border-bottom: 1px solid var(--line-soft);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 10px;
+    }
+    .panel {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: var(--bg2);
+      padding: 9px;
+      display: grid;
+      gap: 6px;
+    }
+    .panel h4 { margin: 0; font-size: 12px; color: var(--t2); letter-spacing: 0.02em; text-transform: uppercase; }
+    .trade {
+      font-size: 12px;
+      color: var(--t3);
+      border-top: 1px solid rgba(48, 68, 94, 0.38);
+      padding-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .trade:first-of-type { border-top: 0; padding-top: 0; }
+
+    .orders {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 32px 1fr;
+    }
+    .orders-head {
+      display: grid;
+      grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr 1fr;
+      align-items: center;
+      padding: 0 10px;
+      color: var(--t4);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      border-bottom: 1px solid rgba(48, 68, 94, 0.5);
+      background: rgba(17, 29, 47, 0.5);
+    }
+    .orders-body { overflow: auto; }
+    .o-row {
+      height: 34px;
+      display: grid;
+      grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr 1fr;
+      align-items: center;
+      padding: 0 10px;
+      color: var(--t2);
+      font-size: 12px;
+      border-bottom: 1px solid rgba(48, 68, 94, 0.3);
+    }
+    .tag {
+      border: 1px solid rgba(58, 82, 112, 0.68);
+      background: #1a2940;
+      border-radius: 999px;
+      padding: 2px 7px;
+      display: inline-block;
+      font-size: 10px;
+      color: var(--t3);
+      letter-spacing: 0.02em;
+    }
+
+    .right {
+      padding: 10px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 10px;
+      background: rgba(15, 27, 43, 0.86);
+    }
+    .box {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: rgba(17, 29, 47, 0.68);
+      padding: 9px;
+      display: grid;
+      gap: 7px;
+    }
+    .box h4 { margin: 0; color: var(--t2); font-size: 12px; text-transform: uppercase; letter-spacing: 0.02em; }
+    .line {
+      border-top: 1px solid rgba(48, 68, 94, 0.38);
+      padding-top: 7px;
+      color: var(--t3);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .line:first-of-type { border-top: 0; padding-top: 0; }
+    .line small { display: block; color: var(--t4); font-size: 11px; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="mark"></span>MoneyBuilder Broker</div>
+      <div class="strip">
+        <span><strong>IBOV</strong>129,881 <span class="up">+0.62%</span></span>
+        <span><strong>USD/BRL</strong>4.9283 <span class="down">-0.23%</span></span>
+        <span><strong>IFIX</strong>3,289 <span class="up">+0.18%</span></span>
+        <span class="chip">Conta: Prime</span>
+        <span class="chip">Session: Open</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="side">
+        <section class="profile">
+          Trader Profile
+          <strong>Moderate Growth</strong>
+          Buying Power: R$ 118,420
+        </section>
+        <nav class="nav">
+          <button type="button">Dashboard</button>
+          <button type="button">Portfolio</button>
+          <button type="button">Orders</button>
+          <button type="button" class="active">Trade / Book</button>
+          <button type="button">Analysis</button>
+          <button type="button">User</button>
+        </nav>
+        <section class="pins">
+          <small>Pinned Tickers</small>
+          <div class="pin"><span>PETR4</span><span class="up">+1.40%</span></div>
+          <div class="pin"><span>VALE3</span><span class="down">-0.72%</span></div>
+          <div class="pin"><span>ITUB4</span><span class="up">+0.44%</span></div>
+          <div class="pin"><span>BBDC4</span><span class="down">-0.31%</span></div>
+        </section>
+        <div class="foot">Latency 22ms | Feed RT-B3</div>
+      </aside>
+
+      <main class="center">
+        <section class="assetbar">
+          <div>
+            <h2>PETR4 — Order Negotiation Book</h2>
+            <p>Petrobras PN · Last 38.42 · Spread 0.02 · Vol 31.2M</p>
+          </div>
+          <div class="mini">
+            <span class="box">Day <span class="up">+1.40%</span></span>
+            <span class="box">Bid 38.41</span>
+            <span class="box">Ask 38.43</span>
+          </div>
+        </section>
+
+        <section class="core">
+          <section class="book">
+            <div class="book-head">
+              <span>Bid Ladder (Buy)</span>
+              <span style="text-align:right;">Ask Ladder (Sell)</span>
+            </div>
+            <div class="ladder">
+              <div class="ladder-row"><span>3,400</span><span class="bid">38.41</span><span>BRAD</span><span>XPIN</span><span class="ask">38.43</span><span style="text-align:right;">2,900</span></div>
+              <div class="ladder-row"><span>2,100</span><span class="bid">38.40</span><span>ITAU</span><span>UBSB</span><span class="ask">38.44</span><span style="text-align:right;">1,800</span></div>
+              <div class="ladder-row"><span>1,750</span><span class="bid">38.39</span><span>BTGC</span><span>GENI</span><span class="ask">38.45</span><span style="text-align:right;">1,650</span></div>
+              <div class="spread">Current Spread 0.02 · one-click price selection enabled</div>
+              <div class="ladder-row"><span>1,320</span><span class="bid">38.38</span><span>MIRA</span><span>ITAU</span><span class="ask">38.46</span><span style="text-align:right;">1,420</span></div>
+              <div class="ladder-row"><span>1,080</span><span class="bid">38.37</span><span>ATLA</span><span>RICO</span><span class="ask">38.47</span><span style="text-align:right;">1,110</span></div>
+              <div class="ladder-row"><span>920</span><span class="bid">38.36</span><span>XPIN</span><span>BTGC</span><span class="ask">38.48</span><span style="text-align:right;">970</span></div>
+              <div class="ladder-row"><span>810</span><span class="bid">38.35</span><span>UBSB</span><span>MIRA</span><span class="ask">38.49</span><span style="text-align:right;">860</span></div>
+              <div class="ladder-row"><span>760</span><span class="bid">38.34</span><span>GENI</span><span>ITAU</span><span class="ask">38.50</span><span style="text-align:right;">830</span></div>
+            </div>
+          </section>
+
+          <section class="ticket">
+            <h3>Order Ticket</h3>
+            <div class="sides">
+              <button class="btn buy" type="button">Buy</button>
+              <button class="btn sell" type="button">Sell</button>
+            </div>
+            <div class="ticket-grid">
+              <div class="field"><label>Order Type</label><select><option>Limit</option></select></div>
+              <div class="field"><label>Validity</label><select><option>Day</option></select></div>
+              <div class="field"><label>Quantity</label><input value="1,000" /></div>
+              <div class="field"><label>Price</label><input value="38.43" /></div>
+              <div class="field"><label>Stop Protection</label><select><option>Enabled</option></select></div>
+              <div class="field"><label>Estimated Value</label><input value="R$ 38,430" /></div>
+            </div>
+            <div class="hint">Margin impact: 5.3% of available buying power.</div>
+            <button class="btn primary" type="button">Submit Order</button>
+            <div class="status">Last order rejected: insufficient intraday margin buffer (ORD-992118).</div>
+          </section>
+        </section>
+
+        <section class="recent">
+          <article class="panel">
+            <h4>Time & Sales</h4>
+            <div class="trade"><span>10:42:10 · 38.42</span><span class="up">BUY 2,100</span></div>
+            <div class="trade"><span>10:42:08 · 38.41</span><span class="down">SELL 1,400</span></div>
+            <div class="trade"><span>10:42:05 · 38.42</span><span class="up">BUY 900</span></div>
+          </article>
+          <article class="panel">
+            <h4>Quick Strategy</h4>
+            <div class="trade"><span>Qty Presets</span><span>500 · 1k · 2k</span></div>
+            <div class="trade"><span>Order Template</span><span>Scalp-Limit</span></div>
+            <div class="trade"><span>Auto Replace</span><span class="up">Enabled</span></div>
+          </article>
+        </section>
+
+        <section class="orders">
+          <div class="orders-head">
+            <span>Order ID</span><span>Side</span><span>Qty</span><span>Price</span><span>Status</span><span>Timestamp</span><span>Actions</span>
+          </div>
+          <div class="orders-body">
+            <div class="o-row"><span>ORD-992201</span><span>BUY</span><span>1,000</span><span>38.43</span><span><span class="tag">Pending</span></span><span>10:42:14</span><span>Modify / Cancel</span></div>
+            <div class="o-row"><span>ORD-992117</span><span>SELL</span><span>600</span><span>38.46</span><span><span class="tag">Partial</span></span><span>10:39:55</span><span>Replace / Cancel</span></div>
+            <div class="o-row"><span>ORD-992118</span><span>BUY</span><span>500</span><span>38.44</span><span><span class="tag">Rejected</span></span><span>10:38:17</span><span>Review</span></div>
+            <div class="o-row"><span>ORD-992101</span><span>SELL</span><span>300</span><span>38.47</span><span><span class="tag">Filled</span></span><span>10:34:08</span><span>Details</span></div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="right">
+        <section class="box">
+          <h4>Risk & Exposure</h4>
+          <div class="line">Position Impact: +1,000 PETR4 <small>Exposure rises from 17.4% to 19.1%</small></div>
+          <div class="line">VaR 95% Change: +R$ 1,260 <small>Projected portfolio VaR: R$ 15,240</small></div>
+        </section>
+
+        <section class="box">
+          <h4>Compliance Checks</h4>
+          <div class="line"><span class="up">Market Status:</span> Open <small>Trading permitted for this instrument.</small></div>
+          <div class="line"><span class="down">Rule Alert:</span> Margin threshold nearing limit <small>Reduce size or add collateral.</small></div>
+        </section>
+
+        <section class="box">
+          <h4>Broker Alerts</h4>
+          <div class="line">Liquidity spike detected on top bid levels.<small>Updated 10:42:11 · feed stable</small></div>
+          <div class="line">Two pending orders share same side concentration.<small>Consider price staggering.</small></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</body>
+</html>
