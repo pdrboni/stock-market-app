@@ -12,7 +12,17 @@ const createChart = async (user_id, stock_id, quantity, avg_price) => {
     throw new Error('Avg_price must be a positive number');
   }
 
-  return chartModel.createChart(user_id, stock_id, quantity, avg_price);
+  const chart = await chartModel.createChart(
+    user_id,
+    stock_id,
+    quantity,
+    avg_price,
+  );
+  return {
+    ...chart,
+    quantity: Number(chart.quantity),
+    avg_price: Number(chart.avg_price),
+  };
 };
 
 const getCharts = async () => {
@@ -30,7 +40,11 @@ const deleteChart = async (id) => {
     throw new Error('Chart entry not found');
   }
 
-  return chart;
+  return {
+    ...chart,
+    quantity: Number(chart.quantity),
+    avg_price: Number(chart.avg_price),
+  };
 };
 
 // TODO: validate user ownership, etc.
@@ -58,7 +72,11 @@ const updateChart = async (id, user_id, stock_id, quantity, avg_price) => {
     throw new Error('Chart entry not found');
   }
 
-  return chart;
+  return {
+    ...chart,
+    quantity: Number(chart.quantity),
+    avg_price: Number(chart.avg_price),
+  };
 };
 
 export default {

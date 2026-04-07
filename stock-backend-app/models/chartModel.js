@@ -2,7 +2,11 @@ import db from '../config/database.js';
 
 const getCharts = async () => {
   const result = await db.query('SELECT * FROM chart');
-  return result.rows;
+  return result.rows.map((stock) => ({
+    ...stock,
+    quantity: Number(stock.quantity),
+    avg_price: Number(stock.avg_price),
+  }));
 };
 
 const getChartsFiltered = async (filters) => {
@@ -24,7 +28,11 @@ const getChartsFiltered = async (filters) => {
   }
 
   const result = await db.query(query, values);
-  return result.rows;
+  return result.rows.map((stock) => ({
+    ...stock,
+    quantity: Number(stock.quantity),
+    avg_price: Number(stock.avg_price),
+  }));
 };
 
 const createChart = async (user_id, stock_id, quantity, avg_price) => {

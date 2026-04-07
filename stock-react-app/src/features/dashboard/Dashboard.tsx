@@ -23,10 +23,11 @@ import {
   Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router';
-import { setLoginFailure } from '../auth/authSlice';
+import { setLoginFailure, selectUser } from '../auth/authSlice';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { fetchStocks, Stock } from '../../utils/stocks';
 import { selectPinnedStocks, setPinnedStocks } from '../stocks/stocksSlice';
+import { Chart, fetchChart } from '../../utils/chart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -65,25 +66,6 @@ const PINNED_ASSETS = [
   { ticker: 'WEGE3', change: '+0.89%', up: true },
 ];
 
-const POSITIONS_COLS = [
-  'Asset',
-  'Qty',
-  'Avg Price',
-  'Last',
-  'Day',
-  'Unrealized P/L',
-  'Allocation',
-];
-const POSITIONS_DATA = [
-  ['PETR4', '3,500', '36.11', '38.42', '+1.40%', '+R$ 8,085', '17.4%'],
-  ['VALE3', '1,900', '67.80', '63.15', '-0.72%', '-R$ 8,835', '14.2%'],
-  ['ITUB4', '2,700', '31.50', '34.28', '+0.44%', '+R$ 7,506', '12.1%'],
-  ['BBDC4', '4,000', '18.94', '17.76', '-0.31%', '-R$ 4,720', '9.2%'],
-  ['WEGE3', '1,250', '40.02', '42.91', '+0.89%', '+R$ 3,612', '7.5%'],
-  ['BBAS3', '1,800', '51.18', '53.07', '+0.13%', '+R$ 3,402', '6.9%'],
-  ['B3SA3', '5,200', '15.11', '14.34', '-0.55%', '-R$ 4,004', '8.0%'],
-  ['ABEV3', '3,600', '12.43', '13.02', '+0.22%', '+R$ 2,124', '5.7%'],
-];
 
 const ORDERS_DATA = [
   {
@@ -527,7 +509,17 @@ function formatVolume(vol: number): string {
   return vol.toString();
 }
 
-function DataTable({ columns, rows }: { columns: string[]; rows: Stock[] }) {
+function DataTable({
+  columns,
+  rows,
+  onRowClick,
+  selectedId,
+}: {
+  columns: string[];
+  rows: Stock[];
+  onRowClick?: (stock: Stock) => void;
+  selectedId?: string;
+}) {
   const dispatch = useAppDispatch();
   const pinnedStocks = useAppSelector(selectPinnedStocks);
   const pinnedIds = new Set(pinnedStocks.map((s) => s.id));
@@ -574,7 +566,13 @@ function DataTable({ columns, rows }: { columns: string[]; rows: Stock[] }) {
               return (
                 <TableRow
                   key={stock.id}
+                  onClick={() => onRowClick?.(stock)}
                   sx={{
+                    cursor: onRowClick ? 'pointer' : 'default',
+                    bgcolor:
+                      selectedId === stock.id
+                        ? 'rgba(26,41,64,0.6)'
+                        : 'transparent',
                     '&:hover': { bgcolor: 'rgba(26,41,64,0.36)' },
                     '&:last-child td': { borderBottom: 0 },
                   }}
@@ -684,8 +682,102 @@ function StringDataTable({
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+const POSITIONS_COLS = ['Asset', 'Qty', 'Avg Price', 'Last', 'Day', 'Allocation'];
+
+function PositionsTable({
+  chart,
+  stocks,
+}: {
+  chart: Chart[];
+  stocks: Stock[];
+}) {
+  const stockMap = new Map(stocks.map((s) => [s.id, s.symbol]));
+
+  const totalAllocated = chart.reduce((sum, item) => {
+    return sum + (item.quantity ?? 0) * (item.close ?? 0);
+  }, 0);
+
+  return (
+    <Box
+      sx={{
+        mt: '8px',
+        border: `1px solid ${c.lineSoft}`,
+        borderRadius: '8px',
+        overflow: 'hidden',
+        bgcolor: c.panel2,
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
+        <Table size="small" stickyHeader>
+          <TableHead>
+            <TableRow>
+              {POSITIONS_COLS.map((col) => (
+                <TableCell key={col} sx={thCellSx}>
+                  {col}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {chart.map((item) => {
+              const symbol =
+                stockMap.get(item.stock_id ?? '') ?? item.stock_id ?? '—';
+              const qty = item.quantity ?? 0;
+              const avgPrice = item.avg_price ?? 0;
+              const close = item.close ?? null;
+              const pctChange = item.percentage_change ?? 0;
+              const allocated = qty * (close ?? 0);
+              const allocation =
+                totalAllocated > 0 ? (allocated / totalAllocated) * 100 : 0;
+              const dayStr = `${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(2)}%`;
+
+              return (
+                <TableRow
+                  key={item.stock_id}
+                  sx={{
+                    '&:hover': { bgcolor: 'rgba(26,41,64,0.36)' },
+                    '&:last-child td': { borderBottom: 0 },
+                  }}
+                >
+                  <TableCell
+                    sx={{ ...tdCellSx, color: c.text, fontWeight: 600 }}
+                  >
+                    {symbol}
+                  </TableCell>
+                  <TableCell sx={{ ...tdCellSx, color: c.text2 }}>
+                    {qty.toLocaleString()}
+                  </TableCell>
+                  <TableCell sx={{ ...tdCellSx, color: c.text2 }}>
+                    {avgPrice.toFixed(2)}
+                  </TableCell>
+                  <TableCell sx={{ ...tdCellSx, color: c.text2 }}>
+                    {close !== null ? close.toFixed(2) : '—'}
+                  </TableCell>
+                  <TableCell sx={{ ...tdCellSx, color: valueColor(dayStr) }}>
+                    {dayStr}
+                  </TableCell>
+                  <TableCell sx={{ ...tdCellSx, color: c.text2 }}>
+                    {allocation.toFixed(1)}%
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+}
+
 function MainPanel() {
   const [stocks, setStocks] = useState<Stock[]>([]);
+  const [chart, setChart] = useState<Chart[]>([]);
+  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+  const user = useAppSelector(selectUser);
 
   const WATCHLIST_COLS = ['Ticker', 'Last Price', 'Day', 'Vol', 'Pin'];
 
@@ -694,12 +786,24 @@ function MainPanel() {
       try {
         const data = await fetchStocks();
         setStocks(data);
+        if (data.length > 0) setSelectedStock(data[0]);
+      } catch (error) {
+        console.error('Error fetching stock data:', error);
+      }
+    };
+
+    const fetchChartData = async () => {
+      try {
+        const data = await fetchChart(user.id);
+        setChart(data);
+        console.log('Fetched chart data:', data);
       } catch (error) {
         console.error('Error fetching stock data:', error);
       }
     };
 
     fetchStockData();
+    fetchChartData();
   }, []);
 
   return (
@@ -731,7 +835,6 @@ function MainPanel() {
       >
         <Box>
           <Typography
-            onClick={() => console.log(stocks)}
             component="h2"
             sx={{
               m: 0,
@@ -741,11 +844,12 @@ function MainPanel() {
               color: c.text,
             }}
           >
-            PETR4
+            {selectedStock ? selectedStock.symbol : '—'}
           </Typography>
           <Typography sx={{ mt: '3px', color: c.text4, fontSize: 12 }}>
-            Petrobras PN · Selected Asset · Last 38.42 · Day +1.40% · Volume
-            31.2M · Spread 0.02
+            {selectedStock
+              ? `${selectedStock.name} · Selected Asset · Last ${selectedStock.current_price.toFixed(2)} · Day ${Number(selectedStock.percentage_change) >= 0 ? '+' : ''}${Number(selectedStock.percentage_change).toFixed(2)}% · Volume ${formatVolume(selectedStock.current_volume)}`
+              : 'Select a stock from the watchlist'}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
@@ -793,7 +897,12 @@ function MainPanel() {
         }}
       >
         <SectionHead title="Watchlist" controls="Filter | Sort | Dense" />
-        <DataTable columns={WATCHLIST_COLS} rows={stocks} />
+        <DataTable
+          columns={WATCHLIST_COLS}
+          rows={stocks}
+          onRowClick={setSelectedStock}
+          selectedId={selectedStock?.id}
+        />
       </Box>
 
       {/* Positions */}
@@ -810,9 +919,9 @@ function MainPanel() {
       >
         <SectionHead
           title="Portfolio Positions"
-          controls="Sort by P/L | Allocation View"
+          controls="Allocation View"
         />
-        <StringDataTable columns={POSITIONS_COLS} rows={POSITIONS_DATA} />
+        <PositionsTable chart={chart} stocks={stocks} />
       </Box>
     </Paper>
   );

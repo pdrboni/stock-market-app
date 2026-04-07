@@ -18,7 +18,7 @@ import {
   SnackbarCloseReason,
 } from '@mui/material';
 import { useAppDispatch } from '../../hooks';
-import { setLoginSuccess } from '../auth/authSlice';
+import { setLoginSuccess, setUser } from '../auth/authSlice';
 
 // ── Design tokens ────────────────────────────────────────────────────────────
 
@@ -673,6 +673,13 @@ function LoginPanel() {
     document.cookie = `tokenMoneyBuilder=${data.token}`;
 
     dispatch(setLoginSuccess());
+    dispatch(
+      setUser({
+        name: data.user.name,
+        email: data.user.email,
+        id: data.user.id,
+      }),
+    );
 
     navigate('/dashboard', { state: { loginSuccess: true } });
   }
