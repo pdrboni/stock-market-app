@@ -12,13 +12,7 @@
 
 ## Progress Log
 
-### 2026-04-07 — Capturando chart do usuário
-- Adicionada interface `Chart` com campos `percentage_change` e `close` em `src/utils/chart.ts`
-- Criado componente `PositionsTable` no Dashboard para exibir posições do portfólio com dados dinâmicos da API
-- Allocation calculada como `(qty * close) / totalAllocated * 100`
-- Removidos dados estáticos de posições (`POSITIONS_COLS`, `POSITIONS_DATA`)
-
-### 2026-04-06 — Asset strip dinâmico
-- Box do asset strip no `MainPanel` passou a exibir dados da stock selecionada na watchlist
-- Adicionado estado `selectedStock` e prop `onRowClick` no componente `DataTable`
-- Linha selecionada na watchlist recebe destaque visual
+### 2026-04-07 — Dashboard dinâmico
+- Asset strip do `MainPanel` agora exibe dados da stock selecionada na watchlist (symbol, name, last price, day %, volume); ao clicar em uma linha a linha fica destacada e o header atualiza
+- Portfolio Positions substituído de dados estáticos para dados reais da API via `fetchChart`; coluna "Unrealized P/L" removida e "Allocation" calculada dinamicamente como `(qty × close) / totalAllocado`
+- Interface `Chart` atualizada com `percentage_change` e `close`
