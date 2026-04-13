@@ -27,10 +27,10 @@ const getUsersFiltered = async (filters) => {
   return result.rows;
 };
 
-const createUser = async (name, email, passwordHash) => {
+const createUser = async (name, email, passwordHash, color, birth) => {
   const result = await db.query(
-    'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING *',
-    [name, email, passwordHash],
+    'INSERT INTO users (name, email, password_hash, color, birth) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+    [name, email, passwordHash, color, birth],
   );
 
   return result.rows[0];
@@ -44,13 +44,28 @@ const deleteUser = async (id) => {
   return result.rows[0];
 };
 
-const updateUser = async (id, name, email) => {
+const updateUser = async (id, fields) => {
+  const allowed = ['name', 'email', 'color', 'birth'];
+  const setClauses = [];
+  const values = [];
+  let paramIndex = 1;
+
+  for (const col of allowed) {
+    if (fields[col] !== undefined) {
+      setClauses.push(`${col} = $${paramIndex}`);
+      values.push(fields[col]);
+      paramIndex++;
+    }
+  }
+
+  if (setClauses.length === 0) {
+    throw new Error('No fields provided for update');
+  }
+
+  values.push(id);
   const result = await db.query(
-    `UPDATE users
-     SET name = $1, email = $2
-     WHERE id = $3
-     RETURNING *`,
-    [name, email, id],
+    `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+    values,
   );
 
   return result.rows[0];

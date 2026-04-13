@@ -41,7 +41,11 @@ const createTransaction = async (userId, stockId, type, quantity, price) => {
     [userId, stockId, type, quantity, price],
   );
 
-  return result.rows[0];
+  return {
+    ...result.rows[0],
+    price: Number(result.rows[0].price),
+    quantity: Number(result.rows[0].quantity),
+  };
 };
 
 const deleteTransaction = async (id) => {
@@ -50,7 +54,11 @@ const deleteTransaction = async (id) => {
     [id],
   );
 
-  return result.rows[0];
+  return {
+    ...result.rows[0],
+    price: Number(result.rows[0].price),
+    quantity: Number(result.rows[0].quantity),
+  };
 };
 
 const updateTransaction = async (
@@ -69,7 +77,11 @@ const updateTransaction = async (
     [userId, stockId, type, quantity, price, id],
   );
 
-  return result.rows[0];
+  return {
+    ...result.rows[0],
+    price: Number(result.rows[0].price),
+    quantity: Number(result.rows[0].quantity),
+  };
 };
 
 export {

@@ -1,3 +1,11 @@
+export interface StockInfo {
+  id: string;
+  symbol: string;
+  name: string;
+  sector?: string | null;
+  current_price?: number | null;
+}
+
 export interface Chart {
   user_id?: string;
   stock_id?: string;
@@ -5,6 +13,7 @@ export interface Chart {
   avg_price?: number;
   percentage_change?: number;
   close?: number | null;
+  stock_info?: StockInfo;
 }
 
 export async function fetchChart(user_id: string): Promise<Chart[]> {
@@ -46,6 +55,20 @@ export async function fetchChart(user_id: string): Promise<Chart[]> {
     throw new Error('Failed to fetch stocks prices');
   }
 
+  const responseStocks = await fetch('http://localhost:3000/api/stocks', {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const dataStocks = await responseStocks.json();
+  if (!responseStocks.ok) {
+    console.error('Failed to fetch stocks', dataStocks);
+    throw new Error('Failed to fetch stocks');
+  }
+
   const data = dataChart.map((chart: Chart) => {
     const pricesInfo = dataStockPrices.filter(
       (price: { stock_id: string }) => price.stock_id === chart.stock_id,
@@ -62,12 +85,18 @@ export async function fetchChart(user_id: string): Promise<Chart[]> {
             beforeLastPriceInfo.close) *
           100
         : 0;
+    const stockInfo = dataStocks.find(
+      (stock: { id: string }) => stock.id === chart.stock_id,
+    );
     return {
       ...chart,
       percentage_change: percentageChange,
       close: lastPriceInfo ? lastPriceInfo.close : null,
+      stock_info: stockInfo,
     };
   });
+
+  console.log('Processed Chart data:', data);
 
   return data;
 }

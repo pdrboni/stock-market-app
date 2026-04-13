@@ -2,13 +2,13 @@ import * as chartModel from '../models/chartModel.js';
 
 const createChart = async (user_id, stock_id, quantity, avg_price) => {
   // Basic validation
-  if (!user_id || !stock_id || quantity == null || avg_price == null) {
+  if (!user_id || !stock_id || quantity == null) {
     throw new Error('user_id, stock_id, quantity, and avg_price are required');
   }
   if (typeof quantity !== 'number' || quantity < 0) {
     throw new Error('Quantity must be a positive number');
   }
-  if (typeof avg_price !== 'number' || avg_price < 0) {
+  if (avg_price && (typeof avg_price !== 'number' || avg_price < 0)) {
     throw new Error('Avg_price must be a positive number');
   }
 
@@ -33,8 +33,8 @@ const getChartsFiltered = async (filters) => {
   return chartModel.getChartsFiltered(filters);
 };
 
-const deleteChart = async (id) => {
-  const chart = await chartModel.deleteChart(id);
+const deleteChart = async (user_id, stock_id) => {
+  const chart = await chartModel.deleteChart(user_id, stock_id);
 
   if (!chart) {
     throw new Error('Chart entry not found');

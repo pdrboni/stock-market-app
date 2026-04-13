@@ -3,13 +3,12 @@ import counterReducer from './features/counter/counterSlice.ts';
 import stocksReducer from './features/stocks/stocksSlice.ts';
 import uiReducer from './features/ui/uiSlice.ts';
 import ordersReducer from './features/orders/ordersSlice.ts';
-import portfolioReducer from './features/portfolio/portfolioSlice.ts';
+//import portfolioReducer from './features/portfolio/portfolioSlice.ts';
 import authReducer from './features/auth/authSlice.ts';
 
 export const store = configureStore({
   reducer: {
     counter: counterReducer,
-    portfolio: portfolioReducer,
     orders: ordersReducer,
     ui: uiReducer,
     stocks: stocksReducer,

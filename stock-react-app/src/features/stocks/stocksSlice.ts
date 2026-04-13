@@ -7,6 +7,7 @@ interface StocksState {
   pinnedStocks: Stock[];
   loading: boolean;
   error: string | null;
+  selectedStock?: Stock;
 }
 
 const initialState: StocksState = {
@@ -14,6 +15,7 @@ const initialState: StocksState = {
   pinnedStocks: [],
   loading: false,
   error: 'Error',
+  selectedStock: undefined,
 };
 
 export const stocksSlice = createSlice({
@@ -36,6 +38,9 @@ export const stocksSlice = createSlice({
     setPinnedStocks: (state, action: PayloadAction<Stock[]>) => {
       state.pinnedStocks = action.payload;
     },
+    setSelectedStock: (state, action: PayloadAction<Stock>) => {
+      state.selectedStock = action.payload;
+    },
   },
 });
 
@@ -45,6 +50,7 @@ export const {
   setLoading,
   setError,
   setPinnedStocks,
+  setSelectedStock,
 } = stocksSlice.actions;
 
 // Other code such as selectors can use the imported `RootState` type
@@ -53,5 +59,7 @@ export const selectStocksLoading = (state: RootState) => state.stocks.loading;
 export const selectStocksError = (state: RootState) => state.stocks.error;
 export const selectPinnedStocks = (state: RootState) =>
   state.stocks.pinnedStocks;
+export const selectSelectedStock = (state: RootState) =>
+  state.stocks.selectedStock;
 
 export default stocksSlice.reducer;

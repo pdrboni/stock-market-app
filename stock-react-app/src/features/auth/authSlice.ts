@@ -1,13 +1,18 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../../store';
 
-interface AuthState {
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  color?: string;
+  birth?: string;
+  available_cash?: number;
+}
+
+export interface AuthState {
   loginSuccess: boolean;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  };
+  user: User;
 }
 
 const initialState: AuthState = {
@@ -16,6 +21,7 @@ const initialState: AuthState = {
     id: '',
     email: '',
     name: '',
+    available_cash: 0,
   },
 };
 

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import Sidebar from '../../components/Sidebar';
+import RightPanel from '../../components/RightPanel';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
-import type { FC, JSX, ReactNode } from 'react';
+import type { FC, JSX } from 'react';
 import {
   Box,
   Typography,
@@ -26,7 +28,12 @@ import { useNavigate } from 'react-router';
 import { setLoginFailure, selectUser } from '../auth/authSlice';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { fetchStocks, Stock } from '../../utils/stocks';
-import { selectPinnedStocks, setPinnedStocks } from '../stocks/stocksSlice';
+import {
+  selectPinnedStocks,
+  selectSelectedStock,
+  setPinnedStocks,
+  setSelectedStock,
+} from '../stocks/stocksSlice';
 import { Chart, fetchChart } from '../../utils/chart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -56,7 +63,6 @@ const TICKERS = [
   { label: 'DI1F27', value: '10.41%', change: '+0.01pp', up: true },
 ];
 
-const NAV_ITEMS = ['Dashboard', 'User Profile', 'Portfolio', 'Book'];
 
 const PINNED_ASSETS = [
   { ticker: 'PETR4', change: '+1.40%', up: true },
@@ -64,57 +70,6 @@ const PINNED_ASSETS = [
   { ticker: 'ITUB4', change: '+0.44%', up: true },
   { ticker: 'BBDC4', change: '-0.31%', up: false },
   { ticker: 'WEGE3', change: '+0.89%', up: true },
-];
-
-
-const ORDERS_DATA = [
-  {
-    title: 'PETR4 BUY 1,000',
-    status: 'Pending',
-    detail: 'Limit 38.35 | Sent 10:42:14',
-    action: 'Modify / Cancel',
-  },
-  {
-    title: 'VALE3 SELL 600',
-    status: 'Partial',
-    detail: 'Limit 63.40 | Fill 240',
-    action: 'Modify / Cancel',
-  },
-  {
-    title: 'ITUB4 BUY 500',
-    status: 'Rejected',
-    detail: 'Margin threshold exceeded',
-    action: 'Review',
-  },
-  {
-    title: 'WEGE3 SELL 300',
-    status: 'Filled',
-    detail: 'Avg 42.88 | 10:38:55',
-    action: 'Details',
-  },
-  {
-    title: 'ABEV3 BUY 2,000',
-    status: 'Pending',
-    detail: 'Limit 12.98 | Sent 10:44:01',
-    action: 'Modify / Cancel',
-  },
-  {
-    title: 'B3SA3 SELL 1,500',
-    status: 'Pending',
-    detail: 'Limit 14.38 | Sent 10:44:30',
-    action: 'Modify / Cancel',
-  },
-];
-
-const RISK_ITEMS = [
-  { label: 'Total Equity', value: 'R$ 722,430' },
-  { label: 'Day P/L', value: '+R$ 4,316' },
-  { label: 'Month P/L', value: '+R$ 18,204' },
-  { label: 'VaR 95%', value: 'R$ 13,980' },
-  {
-    label: 'Allocation Mix',
-    value: 'Equities 62% · FII 19% · Cash 13% · Fixed 6%',
-  },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -317,156 +272,6 @@ const DashboardTopBar: FC<DashboardTopBarProps> = (props): JSX.Element => {
     </Box>
   );
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-function Sidebar() {
-  const [activeNav, setActiveNav] = useState('Dashboard');
-  const pinnedStocks = useAppSelector((state) => state.stocks.pinnedStocks);
-
-  return (
-    <Paper
-      component="aside"
-      elevation={0}
-      sx={{
-        border: `1px solid ${c.lineSoft}`,
-        borderRadius: '12px',
-        bgcolor: c.panel,
-        p: '10px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        height: '100%',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-      }}
-      onClick={() => console.log(pinnedStocks)}
-    >
-      {/* Profile card */}
-      <Box
-        sx={{
-          border: `1px solid ${c.lineSoft}`,
-          borderRadius: '8px',
-          bgcolor: c.panel2,
-          p: '10px',
-          fontSize: 12,
-          color: c.text3,
-          lineHeight: 1.42,
-          flexShrink: 0,
-        }}
-      >
-        Investor Profile
-        <Typography
-          component="strong"
-          sx={{
-            display: 'block',
-            color: c.text2,
-            mt: '2px',
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
-          Moderate Growth
-        </Typography>
-        Available Cash: R$ 118,420
-      </Box>
-
-      {/* Nav menu */}
-      <Box
-        component="nav"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-          flexShrink: 0,
-        }}
-      >
-        {NAV_ITEMS.map((item) => (
-          <Box
-            key={item}
-            component="button"
-            onClick={() => setActiveNav(item)}
-            sx={{
-              height: 34,
-              border:
-                activeNav === item
-                  ? '1px solid #3a5270'
-                  : '1px solid transparent',
-              borderRadius: '8px',
-              bgcolor: activeNav === item ? '#1a2940' : 'transparent',
-              color: activeNav === item ? c.text : c.text3,
-              textAlign: 'left',
-              px: '10px',
-              fontSize: 13,
-              fontWeight: activeNav === item ? 600 : 500,
-              fontFamily: '"IBM Plex Sans", sans-serif',
-              cursor: 'pointer',
-              transition:
-                'background-color 120ms ease, border-color 120ms ease',
-              '&:hover': {
-                bgcolor: activeNav === item ? '#1a2940' : 'rgba(26,41,64,0.4)',
-              },
-            }}
-          >
-            {item}
-          </Box>
-        ))}
-      </Box>
-
-      {/* Pinned assets */}
-      <Box
-        sx={{
-          borderTop: '1px solid rgba(48,68,94,0.52)',
-          pt: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
-          flex: 1,
-          overflow: 'auto',
-          minHeight: 0,
-        }}
-      >
-        <Typography sx={{ fontSize: 11, color: c.text4, flexShrink: 0 }}>
-          Pinned Assets
-        </Typography>
-        {pinnedStocks.map((stock) => {
-          const change = `${stock.percentage_change >= 0 ? '+' : ''}${stock.percentage_change.toFixed(2)}%`;
-          return (
-            <Box
-              key={stock.id}
-              sx={{
-                height: 30,
-                border: `1px solid ${c.lineSoft}`,
-                borderRadius: '8px',
-                bgcolor: c.panel2,
-                px: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: 12,
-                color: c.text2,
-                flexShrink: 0,
-              }}
-            >
-              <span>{stock.symbol}</span>
-              <Box
-                component="span"
-                sx={{ color: stock.percentage_change >= 0 ? c.up : c.down }}
-              >
-                {change}
-              </Box>
-            </Box>
-          );
-        })}
-      </Box>
-
-      {/* Footer */}
-      <Typography sx={{ fontSize: 11, color: c.text4, flexShrink: 0 }}>
-        Latency 22ms | Feed RT-B3
-      </Typography>
-    </Paper>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -682,7 +487,14 @@ function StringDataTable({
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const POSITIONS_COLS = ['Asset', 'Qty', 'Avg Price', 'Last', 'Day', 'Allocation'];
+const POSITIONS_COLS = [
+  'Asset',
+  'Qty',
+  'Avg Price',
+  'Last',
+  'Day',
+  'Allocation',
+];
 
 function PositionsTable({
   chart,
@@ -776,8 +588,10 @@ function PositionsTable({
 function MainPanel() {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [chart, setChart] = useState<Chart[]>([]);
-  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
   const user = useAppSelector(selectUser);
+  const selectedStock = useAppSelector(selectSelectedStock);
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const WATCHLIST_COLS = ['Ticker', 'Last Price', 'Day', 'Vol', 'Pin'];
 
@@ -786,7 +600,7 @@ function MainPanel() {
       try {
         const data = await fetchStocks();
         setStocks(data);
-        if (data.length > 0) setSelectedStock(data[0]);
+        if (data.length > 0) dispatch(setSelectedStock(data[0]));
       } catch (error) {
         console.error('Error fetching stock data:', error);
       }
@@ -865,6 +679,7 @@ function MainPanel() {
             <Box
               key={label}
               component="button"
+              onClick={() => navigate('/book')}
               sx={{
                 height: 30,
                 borderRadius: '7px',
@@ -900,7 +715,7 @@ function MainPanel() {
         <DataTable
           columns={WATCHLIST_COLS}
           rows={stocks}
-          onRowClick={setSelectedStock}
+          onRowClick={(stock) => dispatch(setSelectedStock(stock))}
           selectedId={selectedStock?.id}
         />
       </Box>
@@ -917,183 +732,9 @@ function MainPanel() {
           borderTop: `1px solid ${c.lineSoft}`,
         }}
       >
-        <SectionHead
-          title="Portfolio Positions"
-          controls="Allocation View"
-        />
+        <SectionHead title="Portfolio Positions" controls="Allocation View" />
         <PositionsTable chart={chart} stocks={stocks} />
       </Box>
-    </Paper>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-function BoxPanel({
-  title,
-  controls,
-  children,
-}: {
-  title: string;
-  controls: string;
-  children: ReactNode;
-}) {
-  return (
-    <Box
-      sx={{
-        border: `1px solid ${c.lineSoft}`,
-        borderRadius: '8px',
-        bgcolor: 'rgba(17,29,47,0.68)',
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        minHeight: 0,
-        overflow: 'hidden',
-      }}
-    >
-      <Box
-        sx={{
-          height: 34,
-          borderBottom: '1px solid rgba(48,68,94,0.46)',
-          px: '10px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexShrink: 0,
-        }}
-      >
-        <Typography
-          component="strong"
-          sx={{
-            color: c.text2,
-            fontWeight: 600,
-            fontSize: 12,
-            textTransform: 'uppercase',
-            letterSpacing: '0.02em',
-          }}
-        >
-          {title}
-        </Typography>
-        <Typography component="span" sx={{ fontSize: 12, color: c.text3 }}>
-          {controls}
-        </Typography>
-      </Box>
-      <Box
-        sx={{
-          flex: 1,
-          overflow: 'auto',
-          p: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-        }}
-      >
-        {children}
-      </Box>
-    </Box>
-  );
-}
-
-function RightPanel() {
-  return (
-    <Paper
-      component="aside"
-      elevation={0}
-      sx={{
-        border: `1px solid ${c.lineSoft}`,
-        borderRadius: '12px',
-        bgcolor: 'rgba(15,27,43,0.86)',
-        p: '10px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        height: '100%',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-      }}
-    >
-      {/* Open Orders */}
-      <BoxPanel title="Open Orders" controls="All | Pending | Exceptions">
-        {ORDERS_DATA.map((order, i) => {
-          const statusColor =
-            order.status === 'Rejected'
-              ? c.down
-              : order.status === 'Filled'
-                ? c.up
-                : c.text3;
-          return (
-            <Box
-              key={i}
-              component="article"
-              sx={{
-                border: '1px solid rgba(48,68,94,0.5)',
-                borderRadius: '8px',
-                bgcolor: c.panel2,
-                p: '8px',
-                fontSize: 12,
-                color: c.text3,
-                lineHeight: 1.4,
-                flexShrink: 0,
-              }}
-            >
-              <Typography
-                component="strong"
-                sx={{
-                  color: c.text2,
-                  display: 'block',
-                  mb: '2px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                }}
-              >
-                {order.title}{' '}
-                <Box component="span" sx={{ color: statusColor }}>
-                  {order.status}
-                </Box>
-              </Typography>
-              {order.detail}
-              <br />
-              {order.action}
-            </Box>
-          );
-        })}
-      </BoxPanel>
-
-      {/* Performance & Risk */}
-      <BoxPanel title="Performance & Risk" controls="Live">
-        {RISK_ITEMS.map((item, i) => (
-          <Box
-            key={i}
-            component="article"
-            sx={{
-              border: '1px solid rgba(48,68,94,0.5)',
-              borderRadius: '8px',
-              bgcolor: c.panel2,
-              p: '8px',
-              fontSize: 12,
-              color: c.text3,
-              lineHeight: 1.4,
-              flexShrink: 0,
-            }}
-          >
-            <Typography
-              component="strong"
-              sx={{
-                color: c.text2,
-                display: 'block',
-                mb: '2px',
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              {item.label}
-            </Typography>
-            <Box component="span" sx={{ color: valueColor(item.value) }}>
-              {item.value}
-            </Box>
-          </Box>
-        ))}
-      </BoxPanel>
     </Paper>
   );
 }

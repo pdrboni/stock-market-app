@@ -15,6 +15,15 @@ import {
   TableRow,
   useMediaQuery,
 } from '@mui/material';
+import { useAppDispatch, useAppSelector } from '../../hooks';
+import { selectSelectedStock } from '../stocks/stocksSlice';
+import { selectUser, setUser, User } from '../auth/authSlice';
+import Sidebar from '../../components/Sidebar';
+import RightPanel from '../../components/RightPanel';
+import {
+  fetchTransactionsForBook,
+  Transaction,
+} from '../../utils/transactions';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -42,15 +51,6 @@ const TICKERS = [
   { label: 'IBOV', value: '129,881', change: '+0.62%', up: true },
   { label: 'USD/BRL', value: '4.9283', change: '-0.23%', up: false },
   { label: 'IFIX', value: '3,289', change: '+0.18%', up: true },
-];
-
-const NAV_ITEMS = [
-  'Dashboard',
-  'Portfolio',
-  'Orders',
-  'Trade / Book',
-  'Analysis',
-  'User',
 ];
 
 const PINNED_TICKERS = [
@@ -128,44 +128,6 @@ const ORDERS_DATA = [
   ['ORD-992101', 'SELL', '300', '38.47', 'Filled', '10:34:08', 'Details'],
 ];
 
-const RISK_ITEMS = [
-  {
-    label: 'Position Impact',
-    value: '+1,000 PETR4',
-    detail: 'Exposure rises from 17.4% to 19.1%',
-  },
-  {
-    label: 'VaR 95% Change',
-    value: '+R$ 1,260',
-    detail: 'Projected portfolio VaR: R$ 15,240',
-  },
-];
-
-const COMPLIANCE_ITEMS = [
-  {
-    label: 'Market Status:',
-    value: 'Open',
-    detail: 'Trading permitted for this instrument.',
-    up: true,
-  },
-  {
-    label: 'Rule Alert:',
-    value: 'Margin threshold nearing limit',
-    detail: 'Reduce size or add collateral.',
-    up: false,
-  },
-];
-
-const BROKER_ALERTS = [
-  {
-    msg: 'Liquidity spike detected on top bid levels.',
-    detail: 'Updated 10:42:11 · feed stable',
-  },
-  {
-    msg: 'Two pending orders share same side concentration.',
-    detail: 'Consider price staggering.',
-  },
-];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -289,157 +251,15 @@ const BookTopBar: FC<BookTopBarProps> = ({ isCompact }): JSX.Element => (
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-function Sidebar() {
-  const [activeNav, setActiveNav] = useState('Trade / Book');
-
-  return (
-    <Paper
-      component="aside"
-      elevation={0}
-      sx={{
-        border: `1px solid ${c.lineSoft}`,
-        borderRadius: '12px',
-        bgcolor: c.panel,
-        p: '10px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        height: '100%',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-      }}
-    >
-      {/* Profile card */}
-      <Box
-        sx={{
-          border: `1px solid ${c.lineSoft}`,
-          borderRadius: '8px',
-          bgcolor: c.panel2,
-          p: '10px',
-          fontSize: 12,
-          color: c.text3,
-          lineHeight: 1.42,
-          flexShrink: 0,
-        }}
-      >
-        Trader Profile
-        <Typography
-          component="strong"
-          sx={{
-            display: 'block',
-            color: c.text2,
-            mt: '2px',
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
-          Moderate Growth
-        </Typography>
-        Buying Power: R$ 118,420
-      </Box>
-
-      {/* Nav menu */}
-      <Box
-        component="nav"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-          flexShrink: 0,
-        }}
-      >
-        {NAV_ITEMS.map((item) => (
-          <Box
-            key={item}
-            component="button"
-            onClick={() => setActiveNav(item)}
-            sx={{
-              height: 34,
-              border:
-                activeNav === item
-                  ? '1px solid #3a5270'
-                  : '1px solid transparent',
-              borderRadius: '8px',
-              bgcolor: activeNav === item ? '#1a2940' : 'transparent',
-              color: activeNav === item ? c.text : c.text3,
-              textAlign: 'left',
-              px: '10px',
-              fontSize: 13,
-              fontWeight: activeNav === item ? 600 : 500,
-              fontFamily: '"IBM Plex Sans", sans-serif',
-              cursor: 'pointer',
-              transition:
-                'background-color 120ms ease, border-color 120ms ease',
-              '&:hover': {
-                bgcolor: activeNav === item ? '#1a2940' : 'rgba(26,41,64,0.4)',
-              },
-            }}
-          >
-            {item}
-          </Box>
-        ))}
-      </Box>
-
-      {/* Pinned tickers */}
-      <Box
-        sx={{
-          borderTop: '1px solid rgba(48,68,94,0.52)',
-          pt: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
-          flex: 1,
-          overflow: 'auto',
-          minHeight: 0,
-        }}
-      >
-        <Typography sx={{ fontSize: 11, color: c.text4, flexShrink: 0 }}>
-          Pinned Tickers
-        </Typography>
-        {PINNED_TICKERS.map(({ ticker, change, up }) => (
-          <Box
-            key={ticker}
-            sx={{
-              height: 30,
-              border: `1px solid ${c.lineSoft}`,
-              borderRadius: '8px',
-              bgcolor: c.panel2,
-              px: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: 12,
-              color: c.text2,
-              flexShrink: 0,
-            }}
-          >
-            <span>{ticker}</span>
-            <Box component="span" sx={{ color: up ? c.up : c.down }}>
-              {change}
-            </Box>
-          </Box>
-        ))}
-      </Box>
-
-      {/* Footer */}
-      <Typography sx={{ fontSize: 11, color: c.text4, flexShrink: 0 }}>
-        Latency 22ms | Feed RT-B3
-      </Typography>
-    </Paper>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Shared columns for each side: Qtd | Corretora | Ordens | Preço
-const BOOK_COLS = ['Qtd', 'Corretora', 'Ordens', 'Preço'];
+// Shared columns for each side: Qtd | Usuário | Preço
+const BOOK_COLS = ['Qtd', 'User', 'Price'];
 
 function BookSectionHeader({ label, color }: { label: string; color: string }) {
   return (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr 1fr',
+        gridTemplateColumns: '1fr 1fr 1fr',
         px: '10px',
         height: 26,
         alignItems: 'center',
@@ -468,24 +288,16 @@ function BookSectionHeader({ label, color }: { label: string; color: string }) {
 }
 
 function BookRow({
-  price,
-  qty,
-  broker,
-  orders,
+  transaction,
   color,
   bgAccent,
 }: {
-  price: string;
-  qty: string;
-  broker: string;
-  orders: number;
+  transaction: Transaction;
   color: string;
   bgAccent: string;
 }) {
-  // Bar width proportional to quantity (max ~4000)
   const maxQty = 4000;
-  const numQty = parseInt(qty.replace(/,/g, ''), 10);
-  const pct = Math.min((numQty / maxQty) * 100, 100);
+  const pct = Math.min((transaction.quantity / maxQty) * 100, 100);
 
   return (
     <Box
@@ -493,7 +305,7 @@ function BookRow({
         position: 'relative',
         height: 24,
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr 1fr',
+        gridTemplateColumns: '1fr 1fr 1fr',
         alignItems: 'center',
         px: '10px',
         fontSize: 12,
@@ -516,9 +328,10 @@ function BookRow({
           pointerEvents: 'none',
         }}
       />
-      <span style={{ position: 'relative' }}>{qty}</span>
-      <span style={{ position: 'relative', color: c.text3 }}>{broker}</span>
-      <span style={{ position: 'relative', color: c.text4 }}>{orders}</span>
+      <span style={{ position: 'relative' }}>{transaction.quantity}</span>
+      <span style={{ position: 'relative', color: c.text3 }}>
+        {transaction.user_name || '—'}
+      </span>
       <Box
         component="span"
         sx={{
@@ -528,13 +341,13 @@ function BookRow({
           textAlign: 'right',
         }}
       >
-        {price}
+        {transaction.price.toFixed(2)}
       </Box>
     </Box>
   );
 }
 
-function OrderBook() {
+function OrderBook({ transactions }: { transactions: Transaction[] }) {
   return (
     <Box
       sx={{
@@ -572,14 +385,13 @@ function OrderBook() {
             letterSpacing: '0.06em',
           }}
         >
-          Venda — Ofertas
+          Sell — Orders
         </Typography>
         <Typography sx={{ fontSize: 10, color: c.text4, ml: 'auto' }}>
-          {ASK_ROWS.length} níveis ·{' '}
-          {ASK_ROWS.reduce(
-            (s, r) => s + parseInt(r.qty.replace(/,/g, ''), 10),
-            0,
-          ).toLocaleString('pt-BR')}{' '}
+          {transactions
+            .filter((t) => t.type === 'SELL')
+            .reduce((s, t) => s + t.quantity, 0)
+            .toLocaleString('pt-BR')}{' '}
           unidades
         </Typography>
       </Box>
@@ -587,15 +399,17 @@ function OrderBook() {
       <BookSectionHeader label="Sell" color={c.askText} />
 
       <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        {/* Asks ordered: worst (highest) at top → best (lowest) at bottom */}
-        {[...ASK_ROWS].map((row, i) => (
-          <BookRow
-            key={i}
-            {...row}
-            color={c.askText}
-            bgAccent="rgba(191,95,95,0.08)"
-          />
-        ))}
+        {transactions
+          .filter((t) => t.type === 'SELL')
+          .sort((a, b) => b.price - a.price)
+          .map((transaction) => (
+            <BookRow
+              key={transaction.id}
+              transaction={transaction}
+              color={c.askText}
+              bgAccent="rgba(191,95,95,0.08)"
+            />
+          ))}
       </Box>
 
       {/* ── Spread row ── */}
@@ -613,9 +427,12 @@ function OrderBook() {
         }}
       >
         <Typography sx={{ fontSize: 11, color: c.text4 }}>
-          Melhor Bid{' '}
+          Best Bid{' '}
           <Box component="span" sx={{ color: c.bidText, fontWeight: 600 }}>
-            38.41
+            {transactions
+              .filter((t) => t.type === 'BUY')
+              .sort((a, b) => b.price - a.price)[0]
+              ?.price.toFixed(2) || '—'}
           </Box>
         </Typography>
         <Typography sx={{ fontSize: 11, color: c.text3 }}>
@@ -625,9 +442,12 @@ function OrderBook() {
           </Box>
         </Typography>
         <Typography sx={{ fontSize: 11, color: c.text4 }}>
-          Melhor Ask{' '}
+          Best Ask{' '}
           <Box component="span" sx={{ color: c.askText, fontWeight: 600 }}>
-            38.43
+            {transactions
+              .filter((t) => t.type === 'SELL')
+              .sort((a, b) => a.price - b.price)[0]
+              ?.price.toFixed(2) || '—'}
           </Box>
         </Typography>
       </Box>
@@ -656,14 +476,13 @@ function OrderBook() {
             letterSpacing: '0.06em',
           }}
         >
-          Compra — Ofertas
+          Buy — Orders
         </Typography>
         <Typography sx={{ fontSize: 11, color: c.text4, ml: 'auto' }}>
-          {BID_ROWS.length} níveis ·{' '}
-          {BID_ROWS.reduce(
-            (s, r) => s + parseInt(r.qty.replace(/,/g, ''), 10),
-            0,
-          ).toLocaleString('pt-BR')}{' '}
+          {transactions
+            .filter((t) => t.type === 'BUY')
+            .reduce((s, t) => s + t.quantity, 0)
+            .toLocaleString('pt-BR')}{' '}
           unidades
         </Typography>
       </Box>
@@ -671,22 +490,192 @@ function OrderBook() {
       <BookSectionHeader label="Buy" color={c.bidText} />
 
       <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        {/* Bids ordered: best (highest) at top */}
-        {BID_ROWS.map((row, i) => (
-          <BookRow
-            key={i}
-            {...row}
-            color={c.bidText}
-            bgAccent="rgba(60,165,111,0.08)"
-          />
-        ))}
+        {transactions
+          .filter((t) => t.type === 'BUY')
+          .sort((a, b) => b.price - a.price)
+          .map((transaction) => (
+            <BookRow
+              key={transaction.id}
+              transaction={transaction}
+              color={c.bidText}
+              bgAccent="rgba(60,165,111,0.08)"
+            />
+          ))}
       </Box>
     </Box>
   );
 }
 
-function OrderTicket() {
+interface OrderTicketProps {
+  setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
+  transactions: Transaction[];
+}
+
+const OrderTicket: FC<OrderTicketProps> = ({
+  setTransactions,
+  transactions,
+}): JSX.Element => {
   const [side, setSide] = useState<'buy' | 'sell'>('buy');
+  const user = useAppSelector(selectUser);
+  const selectedStock = useAppSelector(selectSelectedStock);
+  const [orderData, setOrderData] = useState<Transaction>({
+    user_id: user?.id,
+    stock_id: selectedStock?.id,
+    price: 0,
+    quantity: 0,
+    type: 'BUY',
+    user_name: user?.name || '',
+  } as Transaction);
+  const dispatch = useAppDispatch();
+
+  async function checkOrderMatch(
+    bookTransactions: Transaction[],
+    newTransaction: Transaction,
+  ) {
+    const deleteOrder = async (id: string) =>
+      fetch(`http://localhost:3000/api/transactions`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+
+    const removeFromSellerPortfolio = async (sellerUserId: string) =>
+      fetch(`http://localhost:3000/api/charts`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stock_id: newTransaction.stock_id,
+          user_id: sellerUserId,
+        }),
+      });
+
+    const addToBuyerPortfolio = async (
+      match: Transaction,
+      buyerUserId: string,
+    ) =>
+      fetch(`http://localhost:3000/api/charts`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stock_id: newTransaction.stock_id,
+          user_id: buyerUserId,
+          quantity: newTransaction.quantity,
+          avg_price: match.price,
+        }),
+      });
+
+    const depositToSellerWallet = async (
+      sellerUserId: string,
+      match: Transaction,
+    ) =>
+      fetch(`http://localhost:3000/api/transactions`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stock_id: null,
+          user_id: sellerUserId,
+          quantity: 0,
+          price: match.price * match.quantity,
+          type: 'DEPOSIT',
+        }),
+      });
+
+    const withdrawFromBuyerWallet = async (
+      buyerUserId: string,
+      match: Transaction,
+    ) =>
+      fetch(`http://localhost:3000/api/transactions`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stock_id: null,
+          user_id: buyerUserId,
+          quantity: 0,
+          price: match.price * match.quantity,
+          type: 'WITHDRAWAL',
+        }),
+      });
+
+    const oppositeType = newTransaction.type === 'BUY' ? 'SELL' : 'BUY';
+
+    const candidates = bookTransactions.filter(
+      (t) => t.type === oppositeType && t.stock_id === newTransaction.stock_id,
+    );
+
+    console.log('Book transactions:', bookTransactions);
+    console.log('New transactions:', newTransaction);
+    console.log('Candidate opposite orders:', candidates);
+
+    const match =
+      newTransaction.type === 'BUY'
+        ? candidates.find((t) => t.price <= newTransaction.price)
+        : candidates.find((t) => t.price >= newTransaction.price);
+
+    if (match) {
+      console.log(
+        `[Order Match] ${newTransaction.type} order at R$${newTransaction.price} matched with` +
+          ` ${oppositeType} order from ${match.user_name} at R$${match.price} (id: ${match.id})`,
+      );
+
+      await deleteOrder(match.id);
+      await deleteOrder(newTransaction.id);
+      await addToBuyerPortfolio(match, newTransaction.user_id);
+      await removeFromSellerPortfolio(match.user_id);
+      await depositToSellerWallet(match.user_id, match);
+      console.log(newTransaction, match);
+      await withdrawFromBuyerWallet(newTransaction.user_id, match);
+
+      setTransactions((prev) =>
+        prev.filter((t) => t.id !== match.id && t.id !== newTransaction.id),
+      );
+    } else {
+      console.log(
+        `[No Match] ${newTransaction.type} order at R$${newTransaction.price} — no counterpart found in the book.`,
+      );
+    }
+  }
+
+  async function handleSubmitOrder(order: Transaction) {
+    const response = await fetch(`http://localhost:3000/api/transactions`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(order),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to submit order', await response.text());
+      throw new Error('Failed to submit order');
+    }
+
+    const data = await response.json();
+    const newTransaction: Transaction = { ...data, user_name: order.user_name };
+    setTransactions((prev) => [...prev, newTransaction]);
+    await checkOrderMatch(transactions, newTransaction);
+
+    const cashChange =
+      order.type === 'BUY'
+        ? -order.price * order.quantity
+        : order.type === 'SELL'
+          ? 0
+          : order.price * order.quantity;
+
+    dispatch(
+      setUser({
+        ...user,
+        available_cash: (user.available_cash || 0) + cashChange,
+      }),
+    );
+
+    return { ...data, user_name: order.user_name };
+  }
 
   return (
     <Box
@@ -713,7 +702,13 @@ function OrderTicket() {
           <Box
             key={s}
             component="button"
-            onClick={() => setSide(s)}
+            onClick={() => {
+              setSide(s);
+              setOrderData((prev) => ({
+                ...prev,
+                type: s.toUpperCase() as 'BUY' | 'SELL',
+              }));
+            }}
             sx={{
               height: 32,
               border:
@@ -744,19 +739,17 @@ function OrderTicket() {
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
         {[
           {
-            label: 'Order Type',
-            type: 'select',
-            options: ['Limit', 'Market', 'Stop'],
+            label: 'Quantity',
+            type: 'input',
+            value: orderData.quantity.toString(),
+            key: 'quantity',
           },
-          { label: 'Validity', type: 'select', options: ['Day', 'GTC', 'IOC'] },
-          { label: 'Quantity', type: 'input', value: '1,000' },
-          { label: 'Price', type: 'input', value: '38.43' },
           {
-            label: 'Stop Protection',
-            type: 'select',
-            options: ['Enabled', 'Disabled'],
+            label: 'Price',
+            type: 'input',
+            value: orderData.price.toString(),
+            key: 'price',
           },
-          { label: 'Estimated Value', type: 'input', value: 'R$ 38,430' },
         ].map((f, i) => (
           <Box key={i} sx={{ display: 'grid', gap: '5px' }}>
             <Typography
@@ -803,15 +796,22 @@ function OrderTicket() {
                   outline: 'none',
                   '&:focus': { borderColor: 'rgba(58,82,112,1)' },
                 }}
+                onChange={(e) => {
+                  setOrderData((prev) => {
+                    return {
+                      ...prev,
+                      [f.key]:
+                        f.key === 'quantity'
+                          ? parseInt(e.target.value)
+                          : parseFloat(e.target.value.replace(',', '.')),
+                    };
+                  });
+                }}
               />
             )}
           </Box>
         ))}
       </Box>
-
-      <Typography sx={{ fontSize: 11, color: c.text4 }}>
-        Margin impact: 5.3% of available buying power.
-      </Typography>
 
       <Box
         component="button"
@@ -827,12 +827,13 @@ function OrderTicket() {
           cursor: 'pointer',
           '&:hover': { bgcolor: '#285079' },
         }}
+        onClick={() => handleSubmitOrder(orderData)}
       >
         Submit Order
       </Box>
     </Box>
   );
-}
+};
 
 function OrdersTable() {
   return (
@@ -938,6 +939,20 @@ interface MainPanelProp {
 }
 
 const MainPanel: FC<MainPanelProp> = ({ isEvenMoreCompact }): JSX.Element => {
+  const selectedStock = useAppSelector(selectSelectedStock);
+
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  useEffect(() => {
+    async function fetchTransactionsForBookData() {
+      const transactions = await fetchTransactionsForBook(selectedStock?.id);
+      setTransactions(transactions);
+      console.log('Fetched transactions:', transactions);
+    }
+
+    fetchTransactionsForBookData();
+  }, []);
+
   return (
     <Paper
       component="main"
@@ -976,17 +991,26 @@ const MainPanel: FC<MainPanelProp> = ({ isEvenMoreCompact }): JSX.Element => {
               color: c.text,
             }}
           >
-            PETR4 — Order Negotiation Book
+            {selectedStock?.symbol || 'Asset'} — Order Negotiation Book
           </Typography>
           <Typography sx={{ mt: '3px', color: c.text4, fontSize: 12 }}>
-            Petrobras PN · Last 38.42 · Spread 0.02 · Vol 31.2M
+            {selectedStock?.name || 'Company Name'} · Last{' '}
+            {selectedStock?.current_price || '0.00'} · Spread 0.02 · Vol 31.2M
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
           {[
-            { label: 'Day +1.40%', up: true as boolean | null },
-            { label: 'Bid 38.41', up: null as boolean | null },
-            { label: 'Ask 38.43', up: null as boolean | null },
+            {
+              label: `${selectedStock?.percentage_change && selectedStock?.percentage_change > 0 ? '+' : ''}${selectedStock?.percentage_change?.toFixed(2) || '0.00'}%`,
+              up:
+                selectedStock?.percentage_change &&
+                selectedStock?.percentage_change > 0
+                  ? true
+                  : selectedStock?.percentage_change &&
+                      selectedStock?.percentage_change < 0
+                    ? false
+                    : undefined,
+            },
           ].map(({ label, up }) => (
             <Box
               key={label}
@@ -1021,7 +1045,7 @@ const MainPanel: FC<MainPanelProp> = ({ isEvenMoreCompact }): JSX.Element => {
         }}
       >
         {/* Col 1: Order Book */}
-        <OrderBook />
+        <OrderBook transactions={transactions} />
 
         {/* Col 2: Ticket on top, Orders table below */}
         <Box
@@ -1033,7 +1057,10 @@ const MainPanel: FC<MainPanelProp> = ({ isEvenMoreCompact }): JSX.Element => {
             overflow: 'hidden',
           }}
         >
-          <OrderTicket />
+          <OrderTicket
+            setTransactions={setTransactions}
+            transactions={transactions}
+          />
           <OrdersTable />
         </Box>
       </Box>
@@ -1042,134 +1069,6 @@ const MainPanel: FC<MainPanelProp> = ({ isEvenMoreCompact }): JSX.Element => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-
-function InfoBox({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Box
-      sx={{
-        border: `1px solid ${c.lineSoft}`,
-        borderRadius: '8px',
-        bgcolor: 'rgba(17,29,47,0.68)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '7px',
-        p: '9px',
-        flexShrink: 0,
-      }}
-    >
-      <Typography
-        sx={{
-          fontSize: 12,
-          color: c.text2,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.02em',
-        }}
-      >
-        {title}
-      </Typography>
-      {children}
-    </Box>
-  );
-}
-
-function InfoLine({
-  label,
-  value,
-  detail,
-  up,
-}: {
-  label?: string;
-  value: string;
-  detail?: string;
-  up?: boolean;
-}) {
-  return (
-    <Box
-      sx={{
-        borderTop: '1px solid rgba(48,68,94,0.38)',
-        pt: '7px',
-        color: c.text3,
-        fontSize: 12,
-        lineHeight: 1.35,
-        '&:first-of-type': { borderTop: 0, pt: 0 },
-      }}
-    >
-      {label && (
-        <Box
-          component="span"
-          sx={{ color: up === true ? c.up : up === false ? c.down : c.text3 }}
-        >
-          {label}{' '}
-        </Box>
-      )}
-      {value}
-      {detail && (
-        <Typography
-          component="small"
-          sx={{ display: 'block', color: c.text4, fontSize: 11, mt: '2px' }}
-        >
-          {detail}
-        </Typography>
-      )}
-    </Box>
-  );
-}
-
-function RightPanel() {
-  return (
-    <Paper
-      component="aside"
-      elevation={0}
-      sx={{
-        border: `1px solid ${c.lineSoft}`,
-        borderRadius: '12px',
-        bgcolor: 'rgba(15,27,43,0.86)',
-        p: '10px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        height: '100%',
-        overflow: 'auto',
-        boxSizing: 'border-box',
-      }}
-    >
-      <InfoBox title="Risk & Exposure">
-        {RISK_ITEMS.map((item, i) => (
-          <InfoLine
-            key={i}
-            value={`${item.label}: ${item.value}`}
-            detail={item.detail}
-          />
-        ))}
-      </InfoBox>
-
-      <InfoBox title="Compliance Checks">
-        {COMPLIANCE_ITEMS.map((item, i) => (
-          <InfoLine
-            key={i}
-            label={item.label}
-            value={item.value}
-            detail={item.detail}
-            up={item.up}
-          />
-        ))}
-      </InfoBox>
-
-      <InfoBox title="Broker Alerts">
-        {BROKER_ALERTS.map((alert, i) => (
-          <InfoLine key={i} value={alert.msg} detail={alert.detail} />
-        ))}
-      </InfoBox>
-    </Paper>
-  );
-}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 

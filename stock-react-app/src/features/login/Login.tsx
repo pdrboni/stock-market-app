@@ -19,6 +19,19 @@ import {
 } from '@mui/material';
 import { useAppDispatch } from '../../hooks';
 import { setLoginSuccess, setUser } from '../auth/authSlice';
+import {
+  fetchTransactionsForUser,
+  Transaction,
+} from '../../utils/transactions';
+
+function computeAvailableCash(transactions: Transaction[]): number {
+  return transactions.reduce((cash, t) => {
+    if (t.type === 'DEPOSIT') return cash + t.price;
+    if (t.type === 'BUY') return cash - t.price * t.quantity;
+    if (t.type === 'WITHDRAWAL') return cash - t.price;
+    return cash;
+  }, 0);
+}
 
 // ── Design tokens ────────────────────────────────────────────────────────────
 
@@ -211,6 +224,8 @@ interface UserData {
   name?: string;
   email: string;
   password: string;
+  color: string;
+  birth: string;
 }
 
 function SignInPanel() {
@@ -221,12 +236,16 @@ function SignInPanel() {
     name: '',
     email: '',
     password: '',
+    color: '',
+    birth: '',
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState({
     name: '',
     email: '',
     passwordMatch: '',
+    color: '',
+    birth: '',
   });
   const [openSuccess, setOpenSuccess] = React.useState(false);
   const [openFail, setOpenFail] = React.useState(false);
@@ -262,13 +281,15 @@ function SignInPanel() {
   };
 
   function validate() {
-    const next = { name: '', email: '', passwordMatch: '' };
+    const next = { name: '', email: '', passwordMatch: '', color: '', birth: '' };
     if (!userData.name.trim()) next.name = 'Name is required.';
     if (!userData.email.trim()) next.email = 'Email is required.';
+    if (!userData.color.trim()) next.color = 'Color is required.';
+    if (!userData.birth) next.birth = 'Date of birth is required.';
     if (userData.password !== confirmPassword)
       next.passwordMatch = 'Passwords do not match.';
     setErrors(next);
-    return !next.name && !next.email && !next.passwordMatch;
+    return !next.name && !next.email && !next.passwordMatch && !next.color && !next.birth;
   }
 
   async function handleSignUp(userData: UserData) {
@@ -282,6 +303,8 @@ function SignInPanel() {
         name: userData.name,
         email: userData.email,
         password: userData.password,
+        color: userData.color,
+        birth: userData.birth,
       }),
     });
 
@@ -409,6 +432,38 @@ function SignInPanel() {
               setUserData((prev) => ({ ...prev, email: e.target.value }))
             }
           />
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <TextField
+              id="color"
+              label="Favorite Color"
+              placeholder="e.g. blue"
+              fullWidth
+              size="small"
+              error={!!errors.color}
+              helperText={errors.color}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={textFieldSx}
+              onChange={(e) =>
+                setUserData((prev) => ({ ...prev, color: e.target.value }))
+              }
+            />
+
+            <TextField
+              id="birth"
+              label="Date of Birth"
+              type="date"
+              fullWidth
+              size="small"
+              error={!!errors.birth}
+              helperText={errors.birth}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={textFieldSx}
+              onChange={(e) =>
+                setUserData((prev) => ({ ...prev, birth: e.target.value }))
+              }
+            />
+          </Box>
 
           <TextField
             id="new-password"
@@ -673,11 +728,18 @@ function LoginPanel() {
     document.cookie = `tokenMoneyBuilder=${data.token}`;
 
     dispatch(setLoginSuccess());
+
+    const transactions = await fetchTransactionsForUser(data.user.id);
+    const available_cash = computeAvailableCash(transactions);
+
     dispatch(
       setUser({
         name: data.user.name,
         email: data.user.email,
         id: data.user.id,
+        color: data.user.color,
+        birth: data.user.birth,
+        available_cash,
       }),
     );
 

@@ -38,9 +38,9 @@ const createChart = async (req, res) => {
 
 const deleteChart = async (req, res) => {
   try {
-    const { id } = req.body;
+    const { user_id, stock_id } = req.body;
 
-    const chart = await chartService.deleteChart(id);
+    const chart = await chartService.deleteChart(user_id, stock_id);
 
     res.status(200).json(chart);
   } catch (error) {

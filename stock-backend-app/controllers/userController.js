@@ -22,9 +22,15 @@ const getUsersFiltered = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, color, birth } = req.body;
 
-    const user = await userService.createUser(name, email, password);
+    const user = await userService.createUser(
+      name,
+      email,
+      password,
+      color,
+      birth,
+    );
 
     res.status(201).json(user);
   } catch (error) {
@@ -46,11 +52,11 @@ const deleteUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const { name, email, id } = req.body;
+    const { id, name, email, color, birth } = req.body;
 
-    const user = await userService.updateUser(id, name, email);
+    const user = await userService.updateUser(id, { name, email, color, birth });
 
-    res.status(201).json(user);
+    res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

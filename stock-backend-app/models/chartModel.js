@@ -44,10 +44,11 @@ const createChart = async (user_id, stock_id, quantity, avg_price) => {
   return result.rows[0];
 };
 
-const deleteChart = async (id) => {
-  const result = await db.query('DELETE FROM chart WHERE id = $1 RETURNING *', [
-    id,
-  ]);
+const deleteChart = async (user_id, stock_id) => {
+  const result = await db.query(
+    'DELETE FROM chart WHERE user_id = $1 AND stock_id = $2 RETURNING *',
+    [user_id, stock_id],
+  );
 
   return result.rows[0];
 };

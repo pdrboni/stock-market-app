@@ -1,11 +1,11 @@
 import * as userModel from '../models/userModel.js';
 import { hashPassword } from '../utils/hashPassowrd.js';
 
-const createUser = async (name, email, password) => {
+const createUser = async (name, email, password, color, birth) => {
   const passwordHash = await hashPassword(password);
   console.log(passwordHash);
 
-  return userModel.createUser(name, email, passwordHash);
+  return userModel.createUser(name, email, passwordHash, color, birth);
 };
 
 const getUsers = async () => {
@@ -27,8 +27,8 @@ const deleteUser = async (id) => {
 };
 
 // TODO validar email, impedir alteração de senha, verificar duplicidade
-const updateUser = async (id, name, email) => {
-  const user = await userModel.updateUser(id, name, email);
+const updateUser = async (id, fields) => {
+  const user = await userModel.updateUser(id, fields);
 
   if (!user) {
     throw new Error('User not found');

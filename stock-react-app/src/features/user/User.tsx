@@ -8,7 +8,13 @@ import {
   Select,
   MenuItem,
   useMediaQuery,
+  Snackbar,
+  Alert,
 } from '@mui/material';
+import RightPanel from '../../components/RightPanel';
+import Sidebar from '../../components/Sidebar';
+import { useAppSelector } from '../../hooks';
+import { selectUser, User } from '../auth/authSlice';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -30,85 +36,54 @@ const c = {
 // ── Static data ───────────────────────────────────────────────────────────────
 
 const TICKERS = [
-  { label: 'IBOV',    value: '129,881', change: '+0.62%', up: true  },
-  { label: 'USD/BRL', value: '4.9283',  change: '-0.23%', up: false },
-  { label: 'IFIX',    value: '3,289',   change: '+0.18%', up: true  },
-];
-
-const NAV_ITEMS = [
-  'Dashboard',
-  'Portfolio',
-  'Orders',
-  'Transfers',
-  'User',
-  'Security',
-];
-
-const QUICK_BALANCES = [
-  { label: 'Available Cash',  value: 'R$ 118,420', down: false },
-  { label: 'Pending Funds',   value: 'R$ 4,100',   down: true  },
-  { label: 'Credit Limit',    value: 'R$ 30,000',  down: false },
-];
-
-const SUMMARY_TILES = [
-  {
-    key:    'Verification Status',
-    value:  'KYC Approved',
-    meta:   'Compliant · Updated today',
-    metaUp: true,
-  },
-  {
-    key:    'Security Posture',
-    value:  'Strong',
-    meta:   '2FA enabled · 3 trusted devices',
-    metaUp: null,
-  },
-  {
-    key:    'Funding Availability',
-    value:  'Same Day',
-    meta:   'PIX deposits up to R$ 250,000',
-    metaUp: null,
-  },
+  { label: 'IBOV', value: '129,881', change: '+0.62%', up: true },
+  { label: 'USD/BRL', value: '4.9283', change: '-0.23%', up: false },
+  { label: 'IFIX', value: '3,289', change: '+0.18%', up: true },
 ];
 
 const PERSONAL_FIELDS = [
-  { label: 'First Name',    value: 'Pedro',                           type: 'input'  },
-  { label: 'Last Name',     value: 'Barbosa',                         type: 'input'  },
-  { label: 'Email',         value: 'pedro.barbosa@moneybuilder.com',  type: 'input'  },
-  { label: 'Phone',         value: '+55 11 98888-1200',               type: 'input'  },
-  { label: 'CPF',           value: '***.***.***-90',                  type: 'input'  },
-  { label: 'Date of Birth', value: '1989-08-14',                      type: 'input'  },
+  { label: 'name', value: 'Pedro', type: 'input' },
+  { label: 'email', value: 'pedro.barbosa@moneybuilder.com', type: 'input' },
+  { label: 'color', value: 'red', type: 'input' },
+  { label: 'birth', value: '1989-08-14', type: 'input' },
 ];
 
 const COMPLIANCE_FIELDS = [
-  { label: 'Address',              value: 'Av. Paulista, 1800',   type: 'input',  options: []                                       },
-  { label: 'City',                 value: 'São Paulo',             type: 'input',  options: []                                       },
-  { label: 'State',                value: 'SP',                    type: 'select', options: ['SP', 'RJ', 'MG', 'RS', 'PR']           },
-  { label: 'ZIP',                  value: '01310-200',             type: 'input',  options: []                                       },
-  { label: 'Tax Residency',        value: 'Brazil',                type: 'select', options: ['Brazil', 'Other']                      },
-  { label: 'Professional Profile', value: 'Individual Investor',   type: 'select', options: ['Individual Investor', 'Professional']  },
+  { label: 'Address', value: 'Av. Paulista, 1800', type: 'input', options: [] },
+  { label: 'City', value: 'São Paulo', type: 'input', options: [] },
+  {
+    label: 'State',
+    value: 'SP',
+    type: 'select',
+    options: ['SP', 'RJ', 'MG', 'RS', 'PR'],
+  },
+  { label: 'ZIP', value: '01310-200', type: 'input', options: [] },
+  {
+    label: 'Tax Residency',
+    value: 'Brazil',
+    type: 'select',
+    options: ['Brazil', 'Other'],
+  },
+  {
+    label: 'Professional Profile',
+    value: 'Individual Investor',
+    type: 'select',
+    options: ['Individual Investor', 'Professional'],
+  },
 ];
 
 const SECURITY_ROWS = [
-  { title: 'Password',                    detail: 'Updated 42 days ago',                              action: 'Change' },
-  { title: 'Two-Factor Authentication',   detail: 'Authenticator app + backup code enabled',          action: 'Manage' },
-  { title: 'Trusted Session Devices',     detail: '3 active devices · Last login 10:41:03',           action: 'Review' },
-];
-
-const ACCOUNT_EVENTS = [
-  { msg: 'Profile email updated successfully.',          detail: 'Trace: EVT-22319 · 10:21:54'       },
-  { msg: 'Device trust granted after 2FA challenge.',    detail: 'Trace: EVT-22302 · 09:58:13'       },
-  { msg: 'Password reset policy acknowledged.',          detail: 'Trace: EVT-22274 · 08:12:43'       },
-];
-
-const PENDING_REQUESTS = [
-  { msg: 'Address confirmation document under review.',  detail: 'KYC queue · ETA 2h'                },
-  { msg: 'Deposit review in progress.',                  detail: 'TRX-884120 · anti-fraud check'     },
-];
-
-const COMPLIANCE_NOTICES = [
-  { msg: 'Risk signal: transfer velocity exceeded user baseline.', detail: 'No block applied, enhanced monitoring active.', up: false },
-  { msg: 'Status: account remains enabled for trading.',           detail: 'Last compliance sync: 10:39:11',                up: true  },
+  { title: 'Password', detail: 'Updated 42 days ago', action: 'Change' },
+  {
+    title: 'Two-Factor Authentication',
+    detail: 'Authenticator app + backup code enabled',
+    action: 'Manage',
+  },
+  {
+    title: 'Trusted Session Devices',
+    detail: '3 active devices · Last login 10:41:03',
+    action: 'Review',
+  },
 ];
 
 // ── Shared field components ───────────────────────────────────────────────────
@@ -125,7 +100,10 @@ const inputSx = {
   outline: 'none',
   width: '100%',
   boxSizing: 'border-box' as const,
-  '&:focus': { borderColor: '#5d84af', boxShadow: '0 0 0 2px rgba(47,90,134,0.48)' },
+  '&:focus': {
+    borderColor: '#5d84af',
+    boxShadow: '0 0 0 2px rgba(47,90,134,0.48)',
+  },
 };
 
 function Field({
@@ -133,15 +111,22 @@ function Field({
   value,
   type = 'input',
   options = [],
+  error,
+  setUserData,
 }: {
   label: string;
   value: string;
   type?: 'input' | 'select';
+  date?: boolean;
   options?: string[];
+  error?: boolean;
+  setUserData?: (e: React.SetStateAction<User>) => void;
 }) {
   return (
     <Box sx={{ display: 'grid', gap: '5px' }}>
-      <Typography sx={{ fontSize: 11, color: c.text3, letterSpacing: '0.02em' }}>
+      <Typography
+        sx={{ fontSize: 11, color: error ? c.down : c.text3, letterSpacing: '0.02em' }}
+      >
         {label}
       </Typography>
       {type === 'select' ? (
@@ -154,17 +139,41 @@ function Field({
             color: c.text,
             bgcolor: '#1a2940',
             borderRadius: '7px',
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(58,82,112,0.72)' },
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(58,82,112,0.72)',
+            },
             '& .MuiSelect-select': { py: '5px', fontSize: 12 },
             '& .MuiSvgIcon-root': { color: c.text3 },
           }}
         >
           {options.map((o) => (
-            <MenuItem key={o} value={o} sx={{ fontSize: 12 }}>{o}</MenuItem>
+            <MenuItem key={o} value={o} sx={{ fontSize: 12 }}>
+              {o}
+            </MenuItem>
           ))}
         </Select>
       ) : (
-        <Box component="input" defaultValue={value} sx={inputSx} />
+        <Box
+          component="input"
+          type={label === 'birth' ? 'date' : 'text'}
+          defaultValue={value}
+          sx={{
+            ...inputSx,
+            ...(error && {
+              borderColor: c.down,
+              '&:focus': { borderColor: c.down, boxShadow: '0 0 0 2px rgba(191,95,95,0.35)' },
+            }),
+          }}
+          onChange={(e) =>
+            setUserData &&
+            setUserData((prev) => ({ ...prev, [label]: e.target.value }))
+          }
+        />
+      )}
+      {error && (
+        <Typography sx={{ fontSize: 10, color: c.down }}>
+          Campo obrigatório
+        </Typography>
       )}
     </Box>
   );
@@ -208,7 +217,8 @@ const UserTopBar: FC<UserTopBarProps> = ({ isCompact }): JSX.Element => (
       <Box
         aria-hidden="true"
         sx={{
-          width: 14, height: 14,
+          width: 14,
+          height: 14,
           border: '1px solid #3a5270',
           borderRadius: '4px',
           bgcolor: '#1a2940',
@@ -219,28 +229,58 @@ const UserTopBar: FC<UserTopBarProps> = ({ isCompact }): JSX.Element => (
     </Box>
 
     {/* Market tickers */}
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: '14px', color: c.text3, whiteSpace: 'nowrap' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '14px',
+        color: c.text3,
+        whiteSpace: 'nowrap',
+      }}
+    >
       {TICKERS.map(({ label, value, change, up }) => (
-        <Typography key={label} component="span" sx={{ fontSize: 12, color: c.text3 }}>
-          <Box component="strong" sx={{ color: c.text2, fontWeight: 600, mr: '4px' }}>{label}</Box>
+        <Typography
+          key={label}
+          component="span"
+          sx={{ fontSize: 12, color: c.text3 }}
+        >
+          <Box
+            component="strong"
+            sx={{ color: c.text2, fontWeight: 600, mr: '4px' }}
+          >
+            {label}
+          </Box>
           {value}{' '}
-          <Box component="span" sx={{ color: up ? c.up : c.down }}>{change}</Box>
+          <Box component="span" sx={{ color: up ? c.up : c.down }}>
+            {change}
+          </Box>
         </Typography>
       ))}
     </Box>
 
     {/* Chips */}
-    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '6px' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        gap: '6px',
+      }}
+    >
       {['Conta: Prime', 'Session: Open'].map((label) => (
         <Box
           key={label}
           sx={{
-            height: 30, px: '10px',
+            height: 30,
+            px: '10px',
             border: '1px solid rgba(58,82,112,0.76)',
             bgcolor: '#1a2940',
             borderRadius: '7px',
-            display: 'flex', alignItems: 'center',
-            fontSize: 11, color: c.text3, whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: 11,
+            color: c.text3,
+            whiteSpace: 'nowrap',
           }}
         >
           {label}
@@ -252,134 +292,24 @@ const UserTopBar: FC<UserTopBarProps> = ({ isCompact }): JSX.Element => (
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-function Sidebar() {
-  const [activeNav, setActiveNav] = useState('User');
-
-  return (
-    <Paper
-      component="aside"
-      elevation={0}
-      sx={{
-        border: `1px solid ${c.lineSoft}`,
-        borderRadius: '12px',
-        bgcolor: c.panel,
-        p: '10px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        height: '100%',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-      }}
-    >
-      {/* Profile mini */}
-      <Box
-        sx={{
-          border: `1px solid ${c.lineSoft}`,
-          borderRadius: '8px',
-          bgcolor: c.panel2,
-          p: '10px',
-          fontSize: 12,
-          color: c.text3,
-          lineHeight: 1.42,
-          flexShrink: 0,
-        }}
-      >
-        User Context
-        <Typography component="strong" sx={{ display: 'block', color: c.text2, mt: '2px', fontSize: 13, fontWeight: 600 }}>
-          Pedro Barbosa
-        </Typography>
-        CPF verified · KYC level 2
-      </Box>
-
-      {/* Nav */}
-      <Box component="nav" sx={{ display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: 0 }}>
-        {NAV_ITEMS.map((item) => (
-          <Box
-            key={item}
-            component="button"
-            onClick={() => setActiveNav(item)}
-            sx={{
-              height: 34,
-              border: activeNav === item ? '1px solid #3a5270' : '1px solid transparent',
-              borderRadius: '8px',
-              bgcolor: activeNav === item ? '#1a2940' : 'transparent',
-              color: activeNav === item ? c.text : c.text3,
-              textAlign: 'left',
-              px: '10px',
-              fontSize: 13,
-              fontWeight: activeNav === item ? 600 : 500,
-              fontFamily: '"IBM Plex Sans", sans-serif',
-              cursor: 'pointer',
-              transition: 'background-color 120ms ease, border-color 120ms ease',
-              '&:hover': { bgcolor: activeNav === item ? '#1a2940' : 'rgba(26,41,64,0.4)' },
-            }}
-          >
-            {item}
-          </Box>
-        ))}
-      </Box>
-
-      {/* Quick balances */}
-      <Box
-        sx={{
-          borderTop: '1px solid rgba(48,68,94,0.52)',
-          pt: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
-          flex: 1,
-          overflow: 'auto',
-          minHeight: 0,
-        }}
-      >
-        <Typography sx={{ fontSize: 11, color: c.text4, flexShrink: 0 }}>Quick Balances</Typography>
-        {QUICK_BALANCES.map(({ label, value, down }) => (
-          <Box
-            key={label}
-            sx={{
-              height: 30,
-              border: `1px solid ${c.lineSoft}`,
-              borderRadius: '8px',
-              bgcolor: c.panel2,
-              px: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: 12,
-              color: c.text2,
-              flexShrink: 0,
-            }}
-          >
-            <span>{label}</span>
-            <Box component="span" sx={{ color: down ? c.down : c.text2 }}>{value}</Box>
-          </Box>
-        ))}
-      </Box>
-
-      {/* Footer */}
-      <Typography sx={{ fontSize: 11, color: c.text4, flexShrink: 0 }}>
-        Latency 22ms | Feed RT-B3
-      </Typography>
-    </Paper>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
 function ActionBtn({
   label,
   primary = false,
+  onClick,
 }: {
   label: string;
   primary?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <Box
       component="button"
+      onClick={onClick}
       sx={{
         height: 32,
-        border: primary ? `1px solid ${c.actionEdge}` : '1px solid rgba(58,82,112,0.78)',
+        border: primary
+          ? `1px solid ${c.actionEdge}`
+          : '1px solid rgba(58,82,112,0.78)',
         borderRadius: '8px',
         bgcolor: primary ? c.action : '#1a2940',
         color: primary ? c.text : c.text2,
@@ -400,11 +330,19 @@ function ActionBtn({
 function FormPanel({
   title,
   fields,
-  hint,
+  errors,
+  setUserData,
 }: {
   title: string;
-  fields: { label: string; value: string; type?: string; options?: string[] }[];
-  hint: string;
+  fields: {
+    label: string;
+    value: string;
+    type?: string;
+    options?: string[];
+    date?: boolean;
+  }[];
+  errors?: Record<string, boolean>;
+  setUserData?: (e: React.SetStateAction<User>) => void;
 }) {
   return (
     <Box
@@ -418,7 +356,14 @@ function FormPanel({
         gap: '8px',
       }}
     >
-      <Typography sx={{ fontSize: 13, color: c.text2, fontWeight: 600, letterSpacing: '0.01em' }}>
+      <Typography
+        sx={{
+          fontSize: 13,
+          color: c.text2,
+          fontWeight: 600,
+          letterSpacing: '0.01em',
+        }}
+      >
         {title}
       </Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -428,16 +373,68 @@ function FormPanel({
             label={f.label}
             value={f.value}
             type={f.type as 'input' | 'select'}
+            date={f.date}
             options={f.options}
+            error={errors?.[f.label]}
+            setUserData={setUserData}
           />
         ))}
       </Box>
-      <Typography sx={{ fontSize: 11, color: c.text4 }}>{hint}</Typography>
     </Box>
   );
 }
 
+const REQUIRED_FIELDS = ['name', 'email', 'color', 'birth'] as const;
+
 function MainPanel() {
+  const user = useAppSelector(selectUser);
+  const [userData, setUserData] = useState<User>(user);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
+  const [toastOpen, setToastOpen] = useState(false);
+
+  const PERSONAL_FIELDS = [
+    { label: 'name', value: userData.name ?? '', type: 'input' },
+    { label: 'email', value: userData.email ?? '', type: 'input' },
+    { label: 'color', value: userData.color ?? '', type: 'input' },
+    {
+      label: 'birth',
+      value: userData.birth ? userData.birth.slice(0, 10) : '',
+      type: 'input',
+      date: true,
+    },
+  ];
+
+  const handleSaveChanges = async () => {
+    const errors: Record<string, boolean> = {};
+    for (const field of REQUIRED_FIELDS) {
+      if (!userData[field] || String(userData[field]).trim() === '') {
+        errors[field] = true;
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
+
+    try {
+      const res = await fetch('http://localhost:3000/api/users', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+
+      if (res.ok) {
+        setToastOpen(true);
+      }
+    } catch (error) {
+      console.error('Error saving changes:', error);
+    }
+  };
+
   return (
     <Paper
       component="main"
@@ -468,7 +465,13 @@ function MainPanel() {
         <Box>
           <Typography
             component="h2"
-            sx={{ m: 0, fontFamily: '"Manrope", sans-serif', fontWeight: 700, fontSize: 20, color: c.text }}
+            sx={{
+              m: 0,
+              fontFamily: '"Manrope", sans-serif',
+              fontWeight: 700,
+              fontSize: 20,
+              color: c.text,
+            }}
           >
             User Profile &amp; Funding
           </Typography>
@@ -477,44 +480,8 @@ function MainPanel() {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: '6px' }}>
-          <ActionBtn label="Save Changes" primary />
-          <ActionBtn label="Cancel" />
-          <ActionBtn label="Reset" />
+          <ActionBtn label="Save Changes" primary onClick={handleSaveChanges} />
         </Box>
-      </Box>
-
-      {/* Summary tiles */}
-      <Box
-        sx={{
-          borderBottom: `1px solid ${c.lineSoft}`,
-          p: '10px',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: '8px',
-          flexShrink: 0,
-        }}
-      >
-        {SUMMARY_TILES.map((t) => (
-          <Box
-            key={t.key}
-            sx={{
-              border: `1px solid ${c.lineSoft}`,
-              borderRadius: '8px',
-              bgcolor: c.panel2,
-              p: '9px 10px',
-              display: 'grid',
-              gap: '4px',
-            }}
-          >
-            <Typography sx={{ fontSize: 11, color: c.text4 }}>{t.key}</Typography>
-            <Typography sx={{ fontSize: 15, fontWeight: 600, fontFamily: '"Manrope", sans-serif', color: c.text }}>
-              {t.value}
-            </Typography>
-            <Typography sx={{ fontSize: 11, color: t.metaUp === true ? c.up : t.metaUp === false ? c.down : c.text3 }}>
-              {t.meta}
-            </Typography>
-          </Box>
-        ))}
       </Box>
 
       {/* Two-column edit zone */}
@@ -530,16 +497,12 @@ function MainPanel() {
         }}
       >
         {/* Forms row */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
           <FormPanel
             title="Personal Data"
             fields={PERSONAL_FIELDS}
-            hint="All required fields validated for trading account continuity."
-          />
-          <FormPanel
-            title="Contact & Compliance"
-            fields={COMPLIANCE_FIELDS}
-            hint="Compliance profile synced at 09:58:04 with no pending mismatch."
+            errors={fieldErrors}
+            setUserData={setUserData}
           />
         </Box>
 
@@ -555,7 +518,15 @@ function MainPanel() {
             gap: '7px',
           }}
         >
-          <Typography sx={{ fontSize: 11, color: c.text4, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+          <Typography
+            sx={{
+              fontSize: 11,
+              color: c.text4,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              fontWeight: 600,
+            }}
+          >
             Security
           </Typography>
           {SECURITY_ROWS.map((row) => (
@@ -575,12 +546,24 @@ function MainPanel() {
               }}
             >
               <Box>
-                <Typography component="strong" sx={{ color: c.text2, display: 'block', mb: '2px', fontSize: 12, fontWeight: 600 }}>
+                <Typography
+                  component="strong"
+                  sx={{
+                    color: c.text2,
+                    display: 'block',
+                    mb: '2px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
                   {row.title}
                 </Typography>
                 {row.detail}
               </Box>
-              <ActionBtn label={row.action} />
+              <ActionBtn
+                label={row.action}
+                onClick={() => console.log(userData)}
+              />
             </Box>
           ))}
         </Box>
@@ -598,7 +581,14 @@ function MainPanel() {
           }}
         >
           {/* Deposit header */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
             <Typography sx={{ fontSize: 13, color: c.text2, fontWeight: 600 }}>
               Deposit Funds
             </Typography>
@@ -616,13 +606,22 @@ function MainPanel() {
                 color: c.text3,
               }}
             >
-              <Box component="span" sx={{ color: c.up }}>Operational</Box>
+              <Box component="span" sx={{ color: c.up }}>
+                Operational
+              </Box>
               {' · Settlement trace required'}
             </Box>
           </Box>
 
           {/* Fund grid */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '8px', alignItems: 'end' }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr auto',
+              gap: '8px',
+              alignItems: 'end',
+            }}
+          >
             <Field label="Amount" value="R$ 10,000.00" />
             <Field
               label="Source Account"
@@ -638,109 +637,24 @@ function MainPanel() {
             />
             <ActionBtn label="Deposit Funds" primary />
           </Box>
-
-          {/* Warning note */}
-          <Box
-            sx={{
-              border: '1px solid rgba(191,95,95,0.5)',
-              bgcolor: 'rgba(50,24,28,0.52)',
-              borderRadius: '8px',
-              color: '#d9b1b1',
-              p: '7px 9px',
-              fontSize: 11,
-            }}
-          >
-            Funding hold: one transfer is still in anti-fraud review (Operation ID: TRX-884120).
-          </Box>
         </Box>
       </Box>
-    </Paper>
-  );
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-
-function LogItem({ msg, detail, up }: { msg: string; detail: string; up?: boolean }) {
-  return (
-    <Box
-      sx={{
-        borderTop: '1px solid rgba(48,68,94,0.4)',
-        pt: '7px',
-        fontSize: 12,
-        color: c.text3,
-        lineHeight: 1.36,
-        '&:first-of-type': { borderTop: 0, pt: 0 },
-      }}
-    >
-      {up === true && <Box component="span" sx={{ color: c.up }}>Status: </Box>}
-      {up === false && <Box component="span" sx={{ color: c.down }}>Risk signal: </Box>}
-      {up !== undefined
-        ? msg.replace(/^(Status:|Risk signal:)\s*/i, '')
-        : msg}
-      <Typography component="small" sx={{ display: 'block', color: c.text4, mt: '2px', fontSize: 11 }}>
-        {detail}
-      </Typography>
-    </Box>
-  );
-}
-
-function RightInfoBox({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Box
-      sx={{
-        border: `1px solid ${c.lineSoft}`,
-        borderRadius: '8px',
-        bgcolor: 'rgba(17,29,47,0.68)',
-        p: '9px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '7px',
-        flexShrink: 0,
-      }}
-    >
-      <Typography sx={{ fontSize: 12, color: c.text2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-        {title}
-      </Typography>
-      {children}
-    </Box>
-  );
-}
-
-function RightPanel() {
-  return (
-    <Paper
-      component="aside"
-      elevation={0}
-      sx={{
-        border: `1px solid ${c.lineSoft}`,
-        borderRadius: '12px',
-        bgcolor: 'rgba(15,27,43,0.86)',
-        p: '10px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        height: '100%',
-        overflow: 'auto',
-        boxSizing: 'border-box',
-      }}
-    >
-      <RightInfoBox title="Recent Account Events">
-        {ACCOUNT_EVENTS.map((e, i) => (
-          <LogItem key={i} msg={e.msg} detail={e.detail} />
-        ))}
-      </RightInfoBox>
-
-      <RightInfoBox title="Pending Requests">
-        {PENDING_REQUESTS.map((e, i) => (
-          <LogItem key={i} msg={e.msg} detail={e.detail} />
-        ))}
-      </RightInfoBox>
-
-      <RightInfoBox title="Compliance Notices">
-        {COMPLIANCE_NOTICES.map((e, i) => (
-          <LogItem key={i} msg={e.msg} detail={e.detail} up={e.up} />
-        ))}
-      </RightInfoBox>
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={4000}
+        onClose={() => setToastOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setToastOpen(false)}
+          severity="success"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          Informações atualizadas com sucesso!
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 }
@@ -832,7 +746,9 @@ export default function User() {
           <Box
             sx={{
               position: 'fixed',
-              top: 0, left: 0, bottom: 0,
+              top: 0,
+              left: 0,
+              bottom: 0,
               width: 220,
               zIndex: 51,
               transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
@@ -846,9 +762,11 @@ export default function User() {
             onClick={() => setSidebarOpen((v) => !v)}
             sx={{
               position: 'fixed',
-              bottom: 16, left: 16,
+              bottom: 16,
+              left: 16,
               zIndex: 52,
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               borderRadius: '50%',
               border: `1px solid ${c.actionEdge}`,
               bgcolor: c.action,
